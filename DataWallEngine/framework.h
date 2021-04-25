@@ -15,7 +15,7 @@
 #include <openssl/err.h>
 
 #include <wmmintrin.h> 
-//#include <immintrin.h>
+#include <immintrin.h>
 
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "Ws2_32.lib")

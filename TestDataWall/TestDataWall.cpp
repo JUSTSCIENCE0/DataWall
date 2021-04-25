@@ -24,6 +24,7 @@ int main()
     DataWallEngine::ProcessorInfo* pInfo;
     DataWallEngine::VideoAdapterInfo* vInfo;*/
 
+    /*
     HMEMORYMODULE myLib = NULL;
     BYTE* key = new BYTE[16];
     for (int i = 0; i < 16; i++)
@@ -36,6 +37,19 @@ int main()
     int res = addNumbers(2, 3);
     printf("%d\n", res);
     DataWallLoader::FreeEncryptedLibrary(myLib);
+    */
+
+    char password[64] = "1234567890";
+    UINT32 hash[8] = {
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    };
+    printf("%s\n", password);
+    HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, 64, hash);
+    printf("0x%08X%08X%08X%08X%08X%08X%08X%08X\n", 
+        hash[0], hash[1], hash[2], hash[3],
+        hash[4], hash[5], hash[6], hash[7]
+    );
 
     /*FILE* fdll = fopen("D:\\DataWall\\SampleDLL.dll", "rb");
     if (!fdll)

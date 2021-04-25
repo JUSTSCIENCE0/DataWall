@@ -46,11 +46,12 @@ namespace DataWallEngine
     extern "C" DATAWALLENGINE_API HRESULT GetMotherboardInfo(MotherboardInfo * &info, UINT8 MBs);
     extern "C" DATAWALLENGINE_API HRESULT GetProcessorInfo(ProcessorInfo * &info, UINT8 CPUs);
     extern "C" DATAWALLENGINE_API HRESULT GetVideoAdapterInfo(VideoAdapterInfo * &info, UINT8 GPUs);
-    extern "C" DATAWALLENGINE_API HRESULT CalculateHash(BYTE * data, UINT64 size, UINT32 * state);
     
     extern "C" DATAWALLENGINE_API HRESULT NetworkRegistration(const char* nickname, const char* password);
+
     extern "C" DATAWALLENGINE_API HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key);
     extern "C" DATAWALLENGINE_API HRESULT DecryptData(BYTE * data, INT32 size, BYTE * key);
+    extern "C" DATAWALLENGINE_API HRESULT CalculateHash(BYTE * data, UINT64 size, UINT32* state);
     //extern "C" DATAWALLENGINE_API HRESULT NetworkAuthentication();
 
     extern "C" DATAWALLENGINE_API HRESULT PackInContainer(BYTE* data, INT32 size, ContentType type, BYTE* key, const char* container_name);
