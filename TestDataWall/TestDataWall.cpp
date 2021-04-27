@@ -38,19 +38,40 @@ int main()
     printf("%d\n", res);
     DataWallLoader::FreeEncryptedLibrary(myLib);
     */
+    while (true)
+    {
+        char name[] = "";
+        char password[] = "";
+        scanf("%s", name);
+        scanf("%s", password);
 
-    char password[128] = "1234567891";
+        BYTE hash[32] = "";
+        printf("\n%s\n", name);
+        printf("%s\n", password);
+        HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, 128, hash);
+        //print(hash, 32);
+
+        std::string path = "D:\\DataWall\\" + std::string(name);
+        FILE* f = fopen(path.c_str(), "wb");
+        char text[65] = "";
+        char* pntr = text;
+        for (int i = 0; i < 32; i++, pntr+=2)
+        {
+            snprintf(pntr, 3, "%02X", hash[i]);
+        }
+
+        printf("%s\n", text);
+        fprintf(f, "%s", text);
+        fflush(f);
+        fclose(f);
+
+    }
+    
     /*UINT32 hash[8] = {
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
         0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
     };*/
-    BYTE hash[32] = "";
-    printf("%s\n", password);
-    HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, 128, hash);
-    /*printf("0x%08X%08X%08X%08X\n", 
-        hash[0], hash[1], hash[2], hash[3]
-    );*/
-    print(hash, 32);
+    
     /*FILE* fdll = fopen("D:\\DataWall\\SampleDLL.dll", "rb");
     if (!fdll)
     {
