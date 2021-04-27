@@ -39,18 +39,18 @@ int main()
     DataWallLoader::FreeEncryptedLibrary(myLib);
     */
 
-    char password[64] = "1234567890";
-    UINT32 hash[8] = {
+    char password[128] = "1234567891";
+    /*UINT32 hash[8] = {
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
         0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    };
+    };*/
+    BYTE hash[32] = "";
     printf("%s\n", password);
-    HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, 64, hash);
-    printf("0x%08X%08X%08X%08X%08X%08X%08X%08X\n", 
-        hash[0], hash[1], hash[2], hash[3],
-        hash[4], hash[5], hash[6], hash[7]
-    );
-
+    HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, 128, hash);
+    /*printf("0x%08X%08X%08X%08X\n", 
+        hash[0], hash[1], hash[2], hash[3]
+    );*/
+    print(hash, 32);
     /*FILE* fdll = fopen("D:\\DataWall\\SampleDLL.dll", "rb");
     if (!fdll)
     {

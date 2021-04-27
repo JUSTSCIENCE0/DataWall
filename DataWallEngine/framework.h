@@ -13,6 +13,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/sha.h>
 
 #include <wmmintrin.h> 
 #include <immintrin.h>
