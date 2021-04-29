@@ -67,6 +67,33 @@ namespace DataWallServer
             if (data == null)
                 return;
 
+            if (data[0] == 230)
+            {
+                try
+                {
+                    int nick_size = Array.IndexOf(data, (byte)0x00) - 1;
+                    int pass_size = 64;
+
+                    string nick = Encoding.UTF8.GetString(data, 1, nick_size);
+                    string pass_hash = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
+
+                    byte[] message;
+                    if (db.AuthentificateUser(nick, pass_hash))
+                        message = GenerateMessage(200, "OK");
+                    else
+                        message = GenerateMessage(255, "Wrong login or password");
+
+                    if(!SendMessage(message))
+                        throw new Exception("Error send message");
+                }
+                catch (Exception exp)
+                {
+                    log.msg("Error at user " + id.ToString() + " " + exp.Message);
+                    alive = false;
+                    return;
+                }
+            }
+
             if (data[0] == 240) // registration
             {
                 try
@@ -77,24 +104,10 @@ namespace DataWallServer
                     string nick = Encoding.UTF8.GetString(data, 1, nick_size);
                     string passwd = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
 
+                    //string pas_hash = passwd.GetHashCode().ToString();
 
-                    string pas_hash = passwd.GetHashCode().ToString();
-
-                    id = db.GetMaxUserID() + 1;
-                    byte[] rnd_bytes = new byte[8];
-                    rnd.NextBytes(rnd_bytes);
-                    UInt64 rnd_code = BitConverter.ToUInt64(rnd_bytes, 0);
-
-                    DBUser user = new DBUser {
-                        id_user = id,
-                        nickname = nick,
-                        passwd_hash = pas_hash,
-                        user_code = rnd_code,
-                        active = true
-                    };
-
-                    if (!db.RegisterNewUser(user))
-                        throw new Exception("DataBase Error");
+                    //if (!db.RegisterNewUser(user))
+                    //    throw new Exception("DataBase Error");
                 }
                 catch(Exception exp)
                 {
@@ -102,6 +115,8 @@ namespace DataWallServer
                     alive = false;
                     return;
                 }
+
+
             }
 
             while (true)
@@ -137,6 +152,36 @@ namespace DataWallServer
                 alive = false;
                 return null;
             }
+        }
+
+        private bool SendMessage(byte[] message)
+        {
+            try
+            {
+                int mes_size = message.Length;
+                byte[] row_size = BitConverter.GetBytes(mes_size);
+
+                sslStream.Write(row_size);
+                sslStream.Write(message);
+            }
+            catch (Exception exp)
+            {
+                log.msg("Error at user " + id.ToString() + " " + exp.Message);
+                alive = false;
+                return false;
+            }
+
+            return true;
+        }
+
+        private byte[] GenerateMessage(byte code, string message)
+        {
+            byte[] row_message = Encoding.UTF8.GetBytes(message);
+            byte[] full_message = new byte[3 + row_message.Length];
+            full_message[0] = code;
+            full_message[2 + row_message.Length] = 0;
+            Array.Copy(row_message, 0, full_message, 2, row_message.Length);
+            return full_message;
         }
     }
 }

@@ -154,9 +154,10 @@ namespace DataWallEngine
     SOCKET hsock = 0;
     SSL* ssl;
 
-    int SendPacket(BYTE* buf, size_t size)
+    int SendPacket(BYTE* buf, int size)
     {
-        BYTE* send_buf = new BYTE[size + 4];
+        size_t llsize = size;
+        BYTE* send_buf = new BYTE[4 + llsize];
         memcpy(send_buf, &size, 4);
         memcpy(send_buf + 4, buf, size);
         size_t res = SSL_write(ssl, send_buf, (int)(size + 4));
@@ -177,6 +178,38 @@ namespace DataWallEngine
             }
         }
         return (int)(res - 4);
+    }
+
+    int RecvPacket(BYTE*& buf, int& size)
+    {
+        BYTE mes_size[4];
+        size_t res = SSL_read(ssl, mes_size, 4);
+        if (res < 0)
+        {
+            int err = SSL_get_error(ssl, (int)res);
+            if (err == SSL_ERROR_WANT_READ)
+                return 0;
+            if (err == SSL_ERROR_WANT_WRITE)
+                return 0;
+            if (err == SSL_ERROR_ZERO_RETURN || err == SSL_ERROR_SYSCALL || err == SSL_ERROR_SSL)
+                return -1;
+        }
+
+        size = *(int*)mes_size;
+        buf = new BYTE[size];
+        res = SSL_read(ssl, buf, (int)size);
+        if (res < 0)
+        {
+            int err = SSL_get_error(ssl, (int)res);
+            if (err == SSL_ERROR_WANT_READ)
+                return 0;
+            if (err == SSL_ERROR_WANT_WRITE)
+                return 0;
+            if (err == SSL_ERROR_ZERO_RETURN || err == SSL_ERROR_SYSCALL || err == SSL_ERROR_SSL)
+                return -1;
+        }
+
+        return 0;
     }
 
     HRESULT InitializeEngine(const char* logfile, const char* server_addr, UINT16 port)
@@ -317,7 +350,9 @@ namespace DataWallEngine
         print_log("DataWallEngine::UninitializeEngine");
         pSvc->Release();
         pLoc->Release();
-        pEnumerator->Release();
+
+        if (pEnumerator)
+            pEnumerator->Release();
         CoUninitialize();
         print_log("Successfull");
 
@@ -705,13 +740,61 @@ namespace DataWallEngine
         return S_OK;
     }
 
+    HRESULT NetworkAuthentication(const char* nickname, const char* password)
+    {
+        if (!Initialized)
+            return E_FAIL;
+
+        print_log("Start network authentication");
+        BYTE pass_hash[32] = "";
+
+        HRESULT hr = CalculateHash((BYTE*)password, std::strlen(password), pass_hash);
+        if (!SUCCEEDED(hr))
+            return hr;
+
+        char text[65] = "";
+        char* pntr = text;
+        for (int i = 0; i < 32; i++, pntr+=2)
+        {
+            snprintf(pntr, 3, "%02X", pass_hash[i]);
+        }
+
+        int size = (int)std::strlen(nickname) + 67;
+        BYTE* buffer = new BYTE[size];
+        memset(buffer, 0, size);
+        buffer[0] = 230; // authentication code
+        memcpy(buffer + 1, nickname, std::strlen(nickname));
+        memcpy(buffer + std::strlen(nickname) + 2, text, 65);
+
+        if (SendPacket(buffer, size) != size)
+        {
+            print_log("Failed to send authentication info");
+            delete[] buffer;
+            return E_FAIL;
+        }
+
+        BYTE* answer = NULL;
+        int ans_size = 0;
+        if (RecvPacket(answer, ans_size))
+        {
+            print_log("Failed to recv authentication result");
+            delete[] buffer;
+            return E_FAIL;
+        }
+        printf("%d\n", answer[0]);
+        printf("%s\n", answer + 2);
+
+        delete[] buffer;
+        return S_OK;
+    }
+
     HRESULT NetworkRegistration(const char* nickname, const char* password)
     {
         if (!Initialized)
             return E_FAIL;
 
         print_log("Start network registration");
-        size_t size = std::strlen(nickname) + std::strlen(password) + 3;
+        int size = (int)std::strlen(nickname) + (int)std::strlen(password) + 3;
         BYTE* buffer = new BYTE[size];
         buffer[0] = 240; // registration code
         memcpy(buffer + 1, nickname, std::strlen(nickname));

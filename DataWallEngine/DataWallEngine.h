@@ -47,6 +47,7 @@ namespace DataWallEngine
     extern "C" DATAWALLENGINE_API HRESULT GetProcessorInfo(ProcessorInfo * &info, UINT8 CPUs);
     extern "C" DATAWALLENGINE_API HRESULT GetVideoAdapterInfo(VideoAdapterInfo * &info, UINT8 GPUs);
     
+    extern "C" DATAWALLENGINE_API HRESULT NetworkAuthentication(const char* nickname, const char* password);
     extern "C" DATAWALLENGINE_API HRESULT NetworkRegistration(const char* nickname, const char* password);
 
     extern "C" DATAWALLENGINE_API HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key);

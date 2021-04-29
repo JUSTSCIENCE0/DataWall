@@ -1,6 +1,7 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
+#include <ctime>
 #include "../DataWallEngine/DataWallEngine.h"
 #include "../DataWallLoader/DataWallLoader.h"
 
@@ -19,10 +20,10 @@ TestFunc addNumbers = NULL;
 int main()
 {
     //HRESULT hr;
-    /*UINT8 MBs, CPUs, GPUs;
+    UINT8 MBs, CPUs, GPUs;
     DataWallEngine::MotherboardInfo* mInfo;
     DataWallEngine::ProcessorInfo* pInfo;
-    DataWallEngine::VideoAdapterInfo* vInfo;*/
+    DataWallEngine::VideoAdapterInfo* vInfo;
 
     /*
     HMEMORYMODULE myLib = NULL;
@@ -38,39 +39,40 @@ int main()
     printf("%d\n", res);
     DataWallLoader::FreeEncryptedLibrary(myLib);
     */
-    while (true)
-    {
-        char name[] = "";
-        char password[] = "";
-        scanf("%s", name);
-        scanf("%s", password);
+    /*srand(time(0));
+    unsigned int code = rand() % 65536;
+    code <<= 16;
+    code += rand() % 65536;
+    printf("%ld\n", code);*/
 
-        BYTE hash[32] = "";
-        printf("\n%s\n", name);
-        printf("%s\n", password);
-        HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, 128, hash);
-        //print(hash, 32);
+    //while (true)
+    //{
+    //    char name[] = "";
+    //    char password[] = "";
+    //    scanf("%s", name);
+    //    scanf("%s", password);
 
-        std::string path = "D:\\DataWall\\" + std::string(name);
-        FILE* f = fopen(path.c_str(), "wb");
-        char text[65] = "";
-        char* pntr = text;
-        for (int i = 0; i < 32; i++, pntr+=2)
-        {
-            snprintf(pntr, 3, "%02X", hash[i]);
-        }
+    //    BYTE hash[32] = "";
+    //    printf("\n%s\n", name);
+    //    printf("%s\n", password);
+    //    HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, strlen(password), hash);
+    //    //print(hash, 32);
 
-        printf("%s\n", text);
-        fprintf(f, "%s", text);
-        fflush(f);
-        fclose(f);
+    //    std::string path = "D:\\DataWall\\" + std::string(name);
+    //    FILE* f = fopen(path.c_str(), "wb");
+    //    char text[65] = "";
+    //    char* pntr = text;
+    //    for (int i = 0; i < 32; i++, pntr+=2)
+    //    {
+    //        snprintf(pntr, 3, "%02X", hash[i]);
+    //    }
 
-    }
-    
-    /*UINT32 hash[8] = {
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    };*/
+    //    printf("%s\n", text);
+    //    fprintf(f, "%s", text);
+    //    fflush(f);
+    //    fclose(f);
+
+    //}
     
     /*FILE* fdll = fopen("D:\\DataWall\\SampleDLL.dll", "rb");
     if (!fdll)
@@ -122,14 +124,16 @@ int main()
     /*hr = DataWallEngine::CalculateHash(data, a, state);
     printf("0x%08x%08x%08x%08x\n", state[0], state[1], state[2], state[3]);*/
 
-    /*hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", "192.168.1.109", 50001);
+    HRESULT hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", "192.168.1.8", 50001);
     if (FAILED(hr))
     {
         printf("Error!\n");
+        system("pause");
         return hr;
     }
 
-    DataWallEngine::NetworkRegistration("user", "password");*/
+    DataWallEngine::NetworkAuthentication("user", "user");
+    //DataWallEngine::NetworkRegistration("user", "password");
 
     /*hr = DataWallEngine::GetSystemConfiguration(MBs, CPUs, GPUs);
     if (FAILED(hr))
@@ -165,12 +169,12 @@ int main()
 
     system("pause");
 
-    /*hr = DataWallEngine::UninitializeEngine();
+    hr = DataWallEngine::UninitializeEngine();
     if (FAILED(hr))
     {
         printf("Error!\n");
         return hr;
-    }*/
+    }
 
     printf("Success!\n");
 }

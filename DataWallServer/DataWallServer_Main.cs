@@ -26,10 +26,7 @@ namespace DataWallServer
             db.InitConnection("127.0.0.1",
                 "datawallinfo", "3306", "root",
                 "192837465564738291yashka");
-            server = new Server(50001, ref log, "D:\\DataWall\\DataWall.cer", ref db);
-
-            //servThrd = new Thread(server.ClientsHandler);
-            //servThrd.Start();
+            server = new Server(50001, ref log, "D:\\DataWall\\DataWall.crt", ref db);
         }
 
         private void Redriver_Tick(object sender, EventArgs e)

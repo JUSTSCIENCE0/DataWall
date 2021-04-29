@@ -352,32 +352,28 @@ namespace DataWallServer
             return result;
         }
 
-        public UInt64 GetMaxUserID()
+        public bool AuthentificateUser(string nickname, string pass_hash)
         {
-            string sql = "SELECT max(id_user) as mx FROM user";
-
-            UInt64 result = 0;
+            string sql = "SELECT * FROM user WHERE" +
+                " login = '" + nickname + "' AND" +
+                " passwd_hash = '" + pass_hash + "'";
 
             try
             {
                 mtx.WaitOne();
                 MySqlCommand command = new MySqlCommand(sql, conn);
                 MySqlDataReader reader = command.ExecuteReader();
-                if(reader.Read())
-                {
-                    result = Convert.ToUInt64(reader["mx"]);
-                }
+                bool result = reader.HasRows;
                 reader.Close();
                 mtx.ReleaseMutex();
+                return result;
             }
             catch (Exception exp)
             {
                 log.msg("Database error - " + exp.Message + " for query :" + sql);
                 mtx.ReleaseMutex();
-                return result;
+                return false;
             }
-
-            return result;
         }
 
         public bool RegisterNewUser(DBUser user)
