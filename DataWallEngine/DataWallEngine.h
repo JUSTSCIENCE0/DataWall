@@ -40,7 +40,7 @@ namespace DataWallEngine
 
     typedef UINT32 ContentType;
 
-    extern "C" DATAWALLENGINE_API HRESULT InitializeEngine(const char* logfile, const char* server_addr, UINT16 port);
+    extern "C" DATAWALLENGINE_API HRESULT InitializeEngine(const char* logfile, bool log_to_stdout, const char* server_addr, UINT16 port);
     extern "C" DATAWALLENGINE_API HRESULT UninitializeEngine();
     extern "C" DATAWALLENGINE_API HRESULT GetSystemConfiguration(UINT8 & MBs, UINT8 & CPUs, UINT8 & GPUs);
     extern "C" DATAWALLENGINE_API HRESULT GetMotherboardInfo(MotherboardInfo * &info, UINT8 MBs);

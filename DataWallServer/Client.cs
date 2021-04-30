@@ -78,13 +78,17 @@ namespace DataWallServer
                     string pass_hash = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
 
                     byte[] message;
-                    if (db.AuthentificateUser(nick, pass_hash))
+                    bool auth_success = db.AuthentificateUser(nick, pass_hash);
+                    if (auth_success)
                         message = GenerateMessage(200, "OK");
                     else
                         message = GenerateMessage(255, "Wrong login or password");
 
                     if(!SendMessage(message))
                         throw new Exception("Error send message");
+
+                    if (!auth_success)
+                        throw new Exception("User sended wrong authentification data");
                 }
                 catch (Exception exp)
                 {

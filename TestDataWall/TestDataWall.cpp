@@ -124,7 +124,7 @@ int main()
     /*hr = DataWallEngine::CalculateHash(data, a, state);
     printf("0x%08x%08x%08x%08x\n", state[0], state[1], state[2], state[3]);*/
 
-    HRESULT hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", "192.168.1.8", 50001);
+    HRESULT hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", true, "192.168.1.8", 50001);
     if (FAILED(hr))
     {
         printf("Error!\n");

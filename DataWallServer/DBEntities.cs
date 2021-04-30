@@ -14,26 +14,31 @@ namespace DataWallServer
 
     struct DBUser //user
     {
-        public UInt64 id_user;
-        public string nickname;
+        public string login;
         public string passwd_hash;
-        public UInt64 user_code;
         public bool active;
+        public UInt64 user_code;
+
+        public DBUser(string _login, string _passwd_hash, bool _active, UInt64 _user_code)
+        {
+            login = _login;
+            passwd_hash = _passwd_hash;
+            active = _active;
+            user_code = _user_code;
+        }
     }
 
-    struct DBUnit //library_unit
+    struct DBUnit //software
     {
-        public UInt64 id_unit;
-        public UInt64 id_user;
-        public string product;
+        public UInt64 id_software;
+        public string name;
         public UInt64 product_code;
         public bool active;
     }
 
-    struct DBDevice //devices
+    struct DBDevice //computer
     {
-        public UInt64 device_id;
-        public UInt64 id_user;
+        public UInt64 id_computer;
         public string cpu;
         public string gpu;
         public string motherboard;
@@ -117,10 +122,9 @@ namespace DataWallServer
                 {
                     result.Add(new DBUser
                     {
-                        id_user = Convert.ToUInt64(reader["id_user"]),
-                        nickname = reader["nickname"].ToString(),
+                        login = reader["login"].ToString(),
                         passwd_hash = reader["passwd_hash"].ToString(),
-                        user_code = Convert.ToUInt64(reader["user_code"]),
+                        user_code = Convert.ToUInt64(reader["code"]),
                         active = Convert.ToBoolean(reader["active"])
                     });
                 }
@@ -137,13 +141,12 @@ namespace DataWallServer
             return result;
         }
 
-        public DBUser LoadUserData(UInt64 id_user, string nickname)
+        public DBUser LoadUserData(string login)
         {
-            string sql = "SELECT * FROM user WHERE id_user = " + id_user.ToString() +
-                " AND nickname = '" + nickname + "'";
+            string sql = "SELECT * FROM user WHERE " +
+                "nickname = '" + login + "'";
 
-            DBUser result = new DBUser();
-            result.id_user = 0;
+            DBUser result = new DBUser(login, "", false, 0);
 
             try
             {
@@ -156,10 +159,8 @@ namespace DataWallServer
                     return result;
                 }
 
-                result.id_user = id_user;
-                result.nickname = nickname;
                 result.passwd_hash = reader["passwd_hash"].ToString();
-                result.user_code = Convert.ToUInt64(reader["user_code"]);
+                result.user_code = Convert.ToUInt64(reader["code"]);
                 result.active = Convert.ToBoolean(reader["active"]);
 
                 reader.Close();
@@ -175,24 +176,24 @@ namespace DataWallServer
             return result;
         }
 
-        public List<DBUnit> LoadUserLibrary(UInt64 id_user)
+        public List<DBUnit> LoadUserLibrary(string login)
         {
             List<DBUnit> result = new List<DBUnit>();
 
             try
             {
                 mtx.WaitOne();
-                string sql = "SELECT * FROM library_unit" +
-                " WHERE id_user = " + id_user.ToString();
+                string sql = "SELECT * FROM user_soft, software" +
+                " WHERE id_user = '" + login + "' AND id_soft = id_software";
                 MySqlCommand command = new MySqlCommand(sql, conn);
                 MySqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     result.Add(new DBUnit
                     {
-                        id_unit = Convert.ToUInt64(reader["id_unit"]),
-                        product = reader["product"].ToString(),
-                        product_code = Convert.ToUInt64(reader["product_code"]),
+                        id_software = Convert.ToUInt64(reader["id_software"]),
+                        name = reader["name"].ToString(),
+                        product_code = Convert.ToUInt64(reader["code"]),
                         active = Convert.ToBoolean(reader["active"])
                     });
                 }
@@ -209,12 +210,13 @@ namespace DataWallServer
             return result;
         }
 
-        public List<DBDevice> LoadUserDevices(UInt64 id_user)
+        public List<DBDevice> LoadUserDevices(string login)
         {
             List<DBDevice> result = new List<DBDevice>();
 
-            string sql = "SELECT * FROM devices" +
-                " WHERE id_user = " + id_user.ToString();
+            string sql = "SELECT * FROM user_comp, computer" +
+                " WHERE id_user = '" + login + "' AND " +
+                "user_comp.id_computer=computer.id_computer";
 
             try
             {
@@ -225,7 +227,7 @@ namespace DataWallServer
                 {
                     result.Add(new DBDevice
                     {
-                        device_id = Convert.ToUInt64(reader["device_id"]),
+                        id_computer = Convert.ToUInt64(reader["computer.id_computer"]),
                         cpu = reader["cpu"].ToString(),
                         motherboard = reader["motherboard"].ToString(),
                         gpu = reader["gpu"].ToString(),
@@ -245,7 +247,7 @@ namespace DataWallServer
             return result;
         }
 
-        public bool SetUserActive(UInt64 id_user, bool state)
+        public bool SetUserActive(string login, bool state)
         {
             int istate;
             if (state)
@@ -254,7 +256,7 @@ namespace DataWallServer
                 istate = 0;
 
             string sql = "UPDATE user SET active = " + istate.ToString() +
-                " WHERE id_user = " + id_user.ToString();
+                " WHERE login = '" + login + "'";
             try
             {
                 mtx.WaitOne();
@@ -279,8 +281,8 @@ namespace DataWallServer
             else
                 istate = 0;
 
-            string sql = "UPDATE devices SET active = " + istate.ToString() +
-                " WHERE device_id = " + device_id.ToString();
+            string sql = "UPDATE computer SET active = " + istate.ToString() +
+                " WHERE id_computer = " + device_id.ToString();
 
             try
             {
@@ -306,8 +308,8 @@ namespace DataWallServer
             else
                 istate = 0;
 
-            string sql = "UPDATE library_unit SET active = " + istate.ToString() +
-                " WHERE id_unit = " + id_unit.ToString();
+            string sql = "UPDATE software SET active = " + istate.ToString() +
+                " WHERE id_software = " + id_unit.ToString();
 
             try
             {
@@ -325,11 +327,11 @@ namespace DataWallServer
             }
         }
 
-        public bool CheckUserLibrary(UInt64 id_user)
+        public bool CheckUserLibrary(string login)
         {
-            string sql = "SELECT * FROM user, library_unit" +
-                " WHERE id_user = " + id_user.ToString() +
-                " AND library_unit.active = 1";
+            string sql = "SELECT * FROM user_soft, software" +
+                " WHERE id_user = '" + login +
+                "' AND software.active = 1";
 
             bool result = false;
 
@@ -378,88 +380,92 @@ namespace DataWallServer
 
         public bool RegisterNewUser(DBUser user)
         {
-            int active = 0;
-            if (user.active)
-                active = 1;
+            //int active = 0;
+            //if (user.active)
+            //    active = 1;
 
-            string sql = "INSERT INTO user SET" +
-                " id_user = " + user.id_user.ToString() +
-                ", nickname = '" + user.nickname +
-                "', password_hash = '" + user.passwd_hash +
-                "', user_code = " + user.user_code +
-                ", active = " + active.ToString();
+            return false;
 
-            try
-            {
-                mtx.WaitOne();
-                MySqlCommand command = new MySqlCommand(sql, conn);
-                command.ExecuteNonQuery();
-                mtx.ReleaseMutex();
-                return true;
-            }
-            catch (Exception exp)
-            {
-                log.msg("Database error - " + exp.Message + " for query :" + sql);
-                mtx.ReleaseMutex();
-                return false;
-            }
+            //string sql = "INSERT INTO user SET" +
+            //    " id_user = " + user.id_user.ToString() +
+            //    ", nickname = '" + user.nickname +
+            //    "', password_hash = '" + user.passwd_hash +
+            //    "', user_code = " + user.user_code +
+            //    ", active = " + active.ToString();
+
+            //try
+            //{
+            //    mtx.WaitOne();
+            //    MySqlCommand command = new MySqlCommand(sql, conn);
+            //    command.ExecuteNonQuery();
+            //    mtx.ReleaseMutex();
+            //    return true;
+            //}
+            //catch (Exception exp)
+            //{
+            //    log.msg("Database error - " + exp.Message + " for query :" + sql);
+            //    mtx.ReleaseMutex();
+            //    return false;
+            //}
         }
 
         public bool AddNewDevice(DBDevice device)
         {
-            int active = 0;
-            if (device.active)
-                active = 1;
+            return false;
+            //int active = 0;
+            //if (device.active)
+            //    active = 1;
 
-            string sql = "INSERT INTO devices SET" +
-                " id_user = " + device.id_user +
-                ", cpu = '" + device.cpu +
-                "', motherboard = '" + device.motherboard +
-                "', gpu = '" + device.gpu +
-                "', active = " + active.ToString();
+            //string sql = "INSERT INTO devices SET" +
+            //    " id_user = " + device.id_user +
+            //    ", cpu = '" + device.cpu +
+            //    "', motherboard = '" + device.motherboard +
+            //    "', gpu = '" + device.gpu +
+            //    "', active = " + active.ToString();
 
-            try
-            {
-                mtx.WaitOne();
-                MySqlCommand command = new MySqlCommand(sql, conn);
-                command.ExecuteNonQuery();
-                mtx.ReleaseMutex();
-                return true;
-            }
-            catch (Exception exp)
-            {
-                log.msg("Database error - " + exp.Message + " for query :" + sql);
-                mtx.ReleaseMutex();
-                return false;
-            }
+            //try
+            //{
+            //    mtx.WaitOne();
+            //    MySqlCommand command = new MySqlCommand(sql, conn);
+            //    command.ExecuteNonQuery();
+            //    mtx.ReleaseMutex();
+            //    return true;
+            //}
+            //catch (Exception exp)
+            //{
+            //    log.msg("Database error - " + exp.Message + " for query :" + sql);
+            //    mtx.ReleaseMutex();
+            //    return false;
+            //}
         }
 
         public bool AddNewUnit(DBUnit unit)
         {
-            int active = 0;
-            if (unit.active)
-                active = 1;
+            return false;
+            //int active = 0;
+            //if (unit.active)
+            //    active = 1;
 
-            string sql = "INSERT INTO library_unit SET" +
-                " id_user = " + unit.id_user.ToString() +
-                ", product = '" + unit.product +
-                "', product_code = " + unit.product_code.ToString() +
-                ", active = " + active.ToString();
+            //string sql = "INSERT INTO library_unit SET" +
+            //    " id_user = " + unit.id_user.ToString() +
+            //    ", product = '" + unit.product +
+            //    "', product_code = " + unit.product_code.ToString() +
+            //    ", active = " + active.ToString();
 
-            try
-            {
-                mtx.WaitOne();
-                MySqlCommand command = new MySqlCommand(sql, conn);
-                command.ExecuteNonQuery();
-                mtx.ReleaseMutex();
-                return true;
-            }
-            catch (Exception exp)
-            {
-                log.msg("Database error - " + exp.Message + " for query :" + sql);
-                mtx.ReleaseMutex();
-                return false;
-            }
+            //try
+            //{
+            //    mtx.WaitOne();
+            //    MySqlCommand command = new MySqlCommand(sql, conn);
+            //    command.ExecuteNonQuery();
+            //    mtx.ReleaseMutex();
+            //    return true;
+            //}
+            //catch (Exception exp)
+            //{
+            //    log.msg("Database error - " + exp.Message + " for query :" + sql);
+            //    mtx.ReleaseMutex();
+            //    return false;
+            //}
         }
     }
 }

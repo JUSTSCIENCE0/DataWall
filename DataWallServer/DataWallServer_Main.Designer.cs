@@ -33,14 +33,27 @@ namespace DataWallServer
             this.Workspace = new System.Windows.Forms.TabControl();
             this.UsersActivities = new System.Windows.Forms.TabPage();
             this.ActivitiesGrid = new System.Windows.Forms.DataGridView();
+            this.login = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.passwd_hash = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.active = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.code = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShowAll = new System.Windows.Forms.RadioButton();
             this.ShowInactive = new System.Windows.Forms.RadioButton();
             this.ShowActive = new System.Windows.Forms.RadioButton();
             this.UsersData = new System.Windows.Forms.TabPage();
-            this.SoftDataGrid = new System.Windows.Forms.DataGridView();
-            this.SelectUser = new System.Windows.Forms.Label();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.DeviceDataGrid = new System.Windows.Forms.DataGridView();
+            this.id_computer = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewCheckBoxColumn2 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.cpu = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.motherboard = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.gpu = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SelectUser = new System.Windows.Forms.Label();
+            this.UsersList = new System.Windows.Forms.ComboBox();
+            this.SoftDataGrid = new System.Windows.Forms.DataGridView();
+            this.id_software = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewCheckBoxColumn1 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.name = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ConsoleTab = new System.Windows.Forms.TabPage();
             this.ConsoleText = new System.Windows.Forms.TextBox();
             this.Redriver = new System.Windows.Forms.Timer(this.components);
@@ -48,8 +61,8 @@ namespace DataWallServer
             this.UsersActivities.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ActivitiesGrid)).BeginInit();
             this.UsersData.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.SoftDataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.DeviceDataGrid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.SoftDataGrid)).BeginInit();
             this.ConsoleTab.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -80,12 +93,51 @@ namespace DataWallServer
             // 
             // ActivitiesGrid
             // 
+            this.ActivitiesGrid.AllowUserToAddRows = false;
+            this.ActivitiesGrid.AllowUserToDeleteRows = false;
+            this.ActivitiesGrid.AllowUserToResizeColumns = false;
+            this.ActivitiesGrid.AllowUserToResizeRows = false;
             this.ActivitiesGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.ActivitiesGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.login,
+            this.passwd_hash,
+            this.active,
+            this.code});
             this.ActivitiesGrid.Location = new System.Drawing.Point(7, 30);
             this.ActivitiesGrid.Name = "ActivitiesGrid";
             this.ActivitiesGrid.Size = new System.Drawing.Size(754, 363);
             this.ActivitiesGrid.TabIndex = 3;
-            this.ActivitiesGrid.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.ActivitiesGrid_CellContentClick);
+            // 
+            // login
+            // 
+            this.login.Frozen = true;
+            this.login.HeaderText = "login";
+            this.login.Name = "login";
+            this.login.ReadOnly = true;
+            this.login.Width = 50;
+            // 
+            // passwd_hash
+            // 
+            this.passwd_hash.Frozen = true;
+            this.passwd_hash.HeaderText = "passwd_hash";
+            this.passwd_hash.Name = "passwd_hash";
+            this.passwd_hash.ReadOnly = true;
+            this.passwd_hash.Width = 500;
+            // 
+            // active
+            // 
+            this.active.Frozen = true;
+            this.active.HeaderText = "active";
+            this.active.Name = "active";
+            this.active.ReadOnly = true;
+            this.active.Width = 50;
+            // 
+            // code
+            // 
+            this.code.Frozen = true;
+            this.code.HeaderText = "code";
+            this.code.Name = "code";
+            this.code.ReadOnly = true;
             // 
             // ShowAll
             // 
@@ -98,6 +150,7 @@ namespace DataWallServer
             this.ShowAll.TabStop = true;
             this.ShowAll.Text = "Show All";
             this.ShowAll.UseVisualStyleBackColor = true;
+            this.ShowAll.CheckedChanged += new System.EventHandler(this.ShowAll_CheckedChanged);
             // 
             // ShowInactive
             // 
@@ -108,6 +161,7 @@ namespace DataWallServer
             this.ShowInactive.TabIndex = 1;
             this.ShowInactive.Text = "Show Inactive";
             this.ShowInactive.UseVisualStyleBackColor = true;
+            this.ShowInactive.CheckedChanged += new System.EventHandler(this.ShowInactive_CheckedChanged);
             // 
             // ShowActive
             // 
@@ -118,13 +172,14 @@ namespace DataWallServer
             this.ShowActive.TabIndex = 0;
             this.ShowActive.Text = "Show Active";
             this.ShowActive.UseVisualStyleBackColor = true;
+            this.ShowActive.CheckedChanged += new System.EventHandler(this.ShowActive_CheckedChanged);
             // 
             // UsersData
             // 
-            this.UsersData.Controls.Add(this.SoftDataGrid);
-            this.UsersData.Controls.Add(this.SelectUser);
-            this.UsersData.Controls.Add(this.comboBox1);
             this.UsersData.Controls.Add(this.DeviceDataGrid);
+            this.UsersData.Controls.Add(this.SelectUser);
+            this.UsersData.Controls.Add(this.UsersList);
+            this.UsersData.Controls.Add(this.SoftDataGrid);
             this.UsersData.Location = new System.Drawing.Point(4, 22);
             this.UsersData.Name = "UsersData";
             this.UsersData.Padding = new System.Windows.Forms.Padding(3);
@@ -133,13 +188,63 @@ namespace DataWallServer
             this.UsersData.Text = "Users Data";
             this.UsersData.UseVisualStyleBackColor = true;
             // 
-            // SoftDataGrid
+            // DeviceDataGrid
             // 
-            this.SoftDataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.SoftDataGrid.Location = new System.Drawing.Point(385, 33);
-            this.SoftDataGrid.Name = "SoftDataGrid";
-            this.SoftDataGrid.Size = new System.Drawing.Size(376, 360);
-            this.SoftDataGrid.TabIndex = 3;
+            this.DeviceDataGrid.AllowUserToAddRows = false;
+            this.DeviceDataGrid.AllowUserToDeleteRows = false;
+            this.DeviceDataGrid.AllowUserToResizeColumns = false;
+            this.DeviceDataGrid.AllowUserToResizeRows = false;
+            this.DeviceDataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.DeviceDataGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.id_computer,
+            this.dataGridViewCheckBoxColumn2,
+            this.cpu,
+            this.motherboard,
+            this.gpu});
+            this.DeviceDataGrid.Location = new System.Drawing.Point(385, 33);
+            this.DeviceDataGrid.Name = "DeviceDataGrid";
+            this.DeviceDataGrid.Size = new System.Drawing.Size(376, 360);
+            this.DeviceDataGrid.TabIndex = 3;
+            // 
+            // id_computer
+            // 
+            this.id_computer.Frozen = true;
+            this.id_computer.HeaderText = "id_computer";
+            this.id_computer.Name = "id_computer";
+            this.id_computer.ReadOnly = true;
+            this.id_computer.Width = 50;
+            // 
+            // dataGridViewCheckBoxColumn2
+            // 
+            this.dataGridViewCheckBoxColumn2.Frozen = true;
+            this.dataGridViewCheckBoxColumn2.HeaderText = "active";
+            this.dataGridViewCheckBoxColumn2.Name = "dataGridViewCheckBoxColumn2";
+            this.dataGridViewCheckBoxColumn2.ReadOnly = true;
+            this.dataGridViewCheckBoxColumn2.Width = 50;
+            // 
+            // cpu
+            // 
+            this.cpu.Frozen = true;
+            this.cpu.HeaderText = "cpu";
+            this.cpu.Name = "cpu";
+            this.cpu.ReadOnly = true;
+            this.cpu.Width = 75;
+            // 
+            // motherboard
+            // 
+            this.motherboard.Frozen = true;
+            this.motherboard.HeaderText = "motherboard";
+            this.motherboard.Name = "motherboard";
+            this.motherboard.ReadOnly = true;
+            this.motherboard.Width = 75;
+            // 
+            // gpu
+            // 
+            this.gpu.Frozen = true;
+            this.gpu.HeaderText = "gpu";
+            this.gpu.Name = "gpu";
+            this.gpu.ReadOnly = true;
+            this.gpu.Width = 75;
             // 
             // SelectUser
             // 
@@ -150,21 +255,61 @@ namespace DataWallServer
             this.SelectUser.TabIndex = 2;
             this.SelectUser.Text = "Select User";
             // 
-            // comboBox1
+            // UsersList
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(75, 6);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(303, 21);
-            this.comboBox1.TabIndex = 1;
+            this.UsersList.FormattingEnabled = true;
+            this.UsersList.Location = new System.Drawing.Point(75, 6);
+            this.UsersList.Name = "UsersList";
+            this.UsersList.Size = new System.Drawing.Size(303, 21);
+            this.UsersList.TabIndex = 1;
+            this.UsersList.SelectedIndexChanged += new System.EventHandler(this.UsersList_SelectedIndexChanged);
             // 
-            // DeviceDataGrid
+            // SoftDataGrid
             // 
-            this.DeviceDataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.DeviceDataGrid.Location = new System.Drawing.Point(10, 33);
-            this.DeviceDataGrid.Name = "DeviceDataGrid";
-            this.DeviceDataGrid.Size = new System.Drawing.Size(368, 360);
-            this.DeviceDataGrid.TabIndex = 0;
+            this.SoftDataGrid.AllowUserToAddRows = false;
+            this.SoftDataGrid.AllowUserToDeleteRows = false;
+            this.SoftDataGrid.AllowUserToResizeColumns = false;
+            this.SoftDataGrid.AllowUserToResizeRows = false;
+            this.SoftDataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.SoftDataGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.id_software,
+            this.dataGridViewCheckBoxColumn1,
+            this.name,
+            this.dataGridViewTextBoxColumn1});
+            this.SoftDataGrid.Location = new System.Drawing.Point(10, 33);
+            this.SoftDataGrid.Name = "SoftDataGrid";
+            this.SoftDataGrid.Size = new System.Drawing.Size(368, 360);
+            this.SoftDataGrid.TabIndex = 0;
+            // 
+            // id_software
+            // 
+            this.id_software.Frozen = true;
+            this.id_software.HeaderText = "id_software";
+            this.id_software.Name = "id_software";
+            this.id_software.ReadOnly = true;
+            this.id_software.Width = 70;
+            // 
+            // dataGridViewCheckBoxColumn1
+            // 
+            this.dataGridViewCheckBoxColumn1.Frozen = true;
+            this.dataGridViewCheckBoxColumn1.HeaderText = "active";
+            this.dataGridViewCheckBoxColumn1.Name = "dataGridViewCheckBoxColumn1";
+            this.dataGridViewCheckBoxColumn1.ReadOnly = true;
+            this.dataGridViewCheckBoxColumn1.Width = 50;
+            // 
+            // name
+            // 
+            this.name.Frozen = true;
+            this.name.HeaderText = "name";
+            this.name.Name = "name";
+            this.name.ReadOnly = true;
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.Frozen = true;
+            this.dataGridViewTextBoxColumn1.HeaderText = "code";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
             // 
             // ConsoleTab
             // 
@@ -211,8 +356,8 @@ namespace DataWallServer
             ((System.ComponentModel.ISupportInitialize)(this.ActivitiesGrid)).EndInit();
             this.UsersData.ResumeLayout(false);
             this.UsersData.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.SoftDataGrid)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.DeviceDataGrid)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.SoftDataGrid)).EndInit();
             this.ConsoleTab.ResumeLayout(false);
             this.ConsoleTab.PerformLayout();
             this.ResumeLayout(false);
@@ -228,13 +373,26 @@ namespace DataWallServer
         private System.Windows.Forms.RadioButton ShowInactive;
         private System.Windows.Forms.RadioButton ShowActive;
         private System.Windows.Forms.DataGridView ActivitiesGrid;
-        private System.Windows.Forms.DataGridView SoftDataGrid;
-        private System.Windows.Forms.Label SelectUser;
-        private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.DataGridView DeviceDataGrid;
+        private System.Windows.Forms.Label SelectUser;
+        private System.Windows.Forms.ComboBox UsersList;
+        private System.Windows.Forms.DataGridView SoftDataGrid;
         private System.Windows.Forms.TabPage ConsoleTab;
         private System.Windows.Forms.TextBox ConsoleText;
         private System.Windows.Forms.Timer Redriver;
+        private System.Windows.Forms.DataGridViewTextBoxColumn login;
+        private System.Windows.Forms.DataGridViewTextBoxColumn passwd_hash;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn active;
+        private System.Windows.Forms.DataGridViewTextBoxColumn code;
+        private System.Windows.Forms.DataGridViewTextBoxColumn id_software;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn name;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn id_computer;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn cpu;
+        private System.Windows.Forms.DataGridViewTextBoxColumn motherboard;
+        private System.Windows.Forms.DataGridViewTextBoxColumn gpu;
     }
 }
 

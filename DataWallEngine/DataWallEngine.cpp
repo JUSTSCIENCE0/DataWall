@@ -88,6 +88,7 @@ void aes128_dec(__m128i* key_schedule, uint8_t* cipherText, uint8_t* plainText)
 }
 
 FILE* f_logs = NULL;
+bool print_to_stdout = false;
 void print_log(const char* _Format, ...)
 {
     if (!f_logs)
@@ -98,7 +99,7 @@ void print_log(const char* _Format, ...)
 
     va_list args;
     va_start(args, _Format);
-    char* buffer = new char[1024];
+    char buffer[1024];
     memset(buffer, ' ', 20);
     sprintf(buffer, "%02d.%02d.%04d %02d:%02d:%02d  ",
         now->tm_mday,
@@ -120,6 +121,9 @@ void print_log(const char* _Format, ...)
 
     fprintf(f_logs, buffer);
     fflush(f_logs);
+
+    if (print_to_stdout)
+        printf(buffer);
 }
 char* convert_w(BSTR data)
 {
@@ -150,6 +154,7 @@ namespace DataWallEngine
     ULONG uReturn = 0;
     VARIANT vtProp;
     bool Initialized = false;
+    bool Authenticated = false;
 
     SOCKET hsock = 0;
     SSL* ssl;
@@ -212,13 +217,14 @@ namespace DataWallEngine
         return 0;
     }
 
-    HRESULT InitializeEngine(const char* logfile, const char* server_addr, UINT16 port)
+    HRESULT InitializeEngine(const char* logfile, bool log_to_stdout, const char* server_addr, UINT16 port)
     {
         HRESULT hr;
 
         if (logfile)
         {
             f_logs = fopen(logfile, "wb");
+            print_to_stdout = log_to_stdout;
         }
         print_log("DataWallEngine::InitializeEngine - Logging initialized");
 
@@ -781,11 +787,25 @@ namespace DataWallEngine
             delete[] buffer;
             return E_FAIL;
         }
-        printf("%d\n", answer[0]);
-        printf("%s\n", answer + 2);
+
+        if (answer[0] == 200)
+        {
+            print_log("Authentication successfull with message: %s", answer + 2);
+            Authenticated = true;
+        }
+        else
+        {
+            print_log("Authentication failed with code %d and message: %s",
+                answer[0], answer + 2);
+            Authenticated = false;
+        }
 
         delete[] buffer;
-        return S_OK;
+        delete[] answer;
+        if (Authenticated)
+            return S_OK;
+        else
+            return E_ACCESSDENIED;
     }
 
     HRESULT NetworkRegistration(const char* nickname, const char* password)
