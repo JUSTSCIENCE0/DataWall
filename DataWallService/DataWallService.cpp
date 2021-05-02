@@ -8,6 +8,9 @@
 #include <thread>
 #include <tchar.h>
 
+#include "../DataWallEngine/DataWallEngine.h"
+#include "../DataWallLoader/DataWallLoader.h"
+
 #ifdef DEBUG
 FILE* f_logs = fopen("D:\\serv_log.txt", "wb");
 void print_log(const char* _Format, ...)
@@ -49,6 +52,37 @@ SERVICE_STATUS_HANDLE g_StatusHandle = NULL;
 HANDLE                hThread = INVALID_HANDLE_VALUE;
 HANDLE                g_ServiceStopEvent = INVALID_HANDLE_VALUE;
 HANDLE                hNamedPipe = INVALID_HANDLE_VALUE;
+
+bool ReadString(char* output) 
+{
+    if (hNamedPipe == INVALID_HANDLE_VALUE)
+        return false;
+
+    ULONG read = 0;
+    int index = 0;
+    do {
+        if (!ReadFile(hNamedPipe, output + index++, 1, &read, NULL))
+        {
+            print_log("Error when read from named pipe");
+            return false;
+        }
+    } while (read > 0 && *(output + index - 1) != 0);
+
+    return true;
+}
+bool WriteString(char* output)
+{
+    if (hNamedPipe == INVALID_HANDLE_VALUE)
+        return false;
+
+    if (!WriteFile(hNamedPipe, output, (DWORD)strlen(output), nullptr, NULL))
+    {
+        print_log("Error when write to named pipe");
+        return false;
+    }
+
+    return true;
+}
 
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv);
 VOID WINAPI ServiceCtrlHandler(DWORD);
@@ -124,8 +158,19 @@ START:
         return;
 
     CloseHandle(g_ServiceStopEvent);
+
     //Service unstoppable
     //goto START;
+
+    g_ServiceStatus.dwControlsAccepted = 0;
+    g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+    g_ServiceStatus.dwWin32ExitCode = 0;
+    g_ServiceStatus.dwCheckPoint = 4;
+
+    if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
+    {
+        print_log("Data Wall Service: ServiceMain: SetServiceStatus returned error");
+    }
 
     return;
 }
@@ -141,12 +186,6 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
 
         SetEvent(g_ServiceStopEvent);
 
-        if (hThread)
-            WaitForSingleObject(hThread, INFINITE);
-        /*
-         * Perform tasks necessary to stop the service here
-         */
-
         g_ServiceStatus.dwControlsAccepted = 0;
         g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
         g_ServiceStatus.dwWin32ExitCode = 0;
@@ -157,7 +196,7 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
             print_log("Data Wall Service: ServiceCtrlHandler: SetServiceStatus returned error");
         }
 
-        // This will signal the worker thread to start shutting down
+        DataWallEngine::UninitializeEngine();
         print_log("SERVICE_CONTROL_STOP");
 
         break;
@@ -183,15 +222,60 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
         print_log("Data Wall Service: Start work: Failed to create named pipe");
         return ERROR_PATH_NOT_FOUND;
     }
-
     print_log("Data Wall Service: Start work: Created named pipe");
+
+    HRESULT hr = DataWallEngine::InitializeEngine("D:\\engine_log.txt", false, "192.168.56.1", 22876);
+    if (FAILED(hr))
+    {
+        print_log("Data Wall Service: Error in initialize engine");
+        return hr;
+    }
+    print_log("Data Wall Service: Engine initialized");
+
+    if (!ConnectNamedPipe(hNamedPipe, NULL))
+    {
+        print_log("Data Wall Service: Failed to connect client to named pipe");
+        return ERROR_INVALID_ACCESS;
+    }
+    print_log("Data Wall Service: Client connected to named pipe");
 
     //  Periodically check if the service has been requested to stop
     while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
     {
+        char str[1024];
+        if (!ReadString(str)) break;
+        print_log("Data Wall Service: string from pipe: %s", str);
+
+        if ((BYTE)str[0] == 230)
+        {
+            char login[100], passwd[100];
+            if (!ReadString(login)) break;
+            if (!ReadString(passwd)) break;
+            print_log("Data Wall Service: Auth data - %s %s", login, passwd);
+
+            hr = DataWallEngine::NetworkAuthentication(login, passwd);
+            BYTE res_code[2] = "";
+            if (SUCCEEDED(hr))
+            {
+                res_code[0] = 200;
+            }
+            else
+            {
+                res_code[0] = 255;
+                WriteString((char*)res_code);
+                break;
+            }
+            
+            if (!WriteString((char*)res_code)) break;
+
+            continue;
+        }
+
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
+    CloseHandle(hNamedPipe);
+    DataWallEngine::UninitializeEngine();
     print_log("ServiceWorkerThread stopped");
     return ERROR_SUCCESS;
 }

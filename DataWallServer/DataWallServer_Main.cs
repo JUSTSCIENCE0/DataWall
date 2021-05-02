@@ -26,7 +26,7 @@ namespace DataWallServer
             db.InitConnection("127.0.0.1",
                 "datawallinfo", "3306", "root",
                 "192837465564738291yashka");
-            server = new Server(50001, ref log, "D:\\DataWall\\DataWall.cer", ref db);
+            server = new Server(22876, ref log, "D:\\DataWall\\DataWall.cer", ref db);
 
             DrawActivitiesTable(ActivityType.ALL_USERS);
             DrawUsersList();

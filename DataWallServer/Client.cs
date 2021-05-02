@@ -69,6 +69,8 @@ namespace DataWallServer
 
             if (data[0] == 230)
             {
+                log.msg("User " + id.ToString() + "start auth");
+
                 try
                 {
                     int nick_size = Array.IndexOf(data, (byte)0x00) - 1;
@@ -80,9 +82,15 @@ namespace DataWallServer
                     byte[] message;
                     bool auth_success = db.AuthentificateUser(nick, pass_hash);
                     if (auth_success)
+                    {
                         message = GenerateMessage(200, "OK");
+                        log.msg("User " + id.ToString() + "auth success");
+                    }
                     else
+                    {
                         message = GenerateMessage(255, "Wrong login or password");
+                        log.msg("User " + id.ToString() + "auth failed");
+                    }
 
                     if(!SendMessage(message))
                         throw new Exception("Error send message");
