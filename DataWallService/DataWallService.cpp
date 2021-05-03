@@ -1,5 +1,7 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #define SERVICE_NAME  (LPSTR)("DataWallService")   
+#define SET_FAILED bWasFail = true
+#define BREAK_FAILED { bWasFail = true; break; }
 
 #define DEBUG
 
@@ -12,6 +14,7 @@
 #include "../DataWallLoader/DataWallLoader.h"
 
 #ifdef DEBUG
+#define ENGINE_LOG "D:\\engine_log.txt"
 FILE* f_logs = fopen("D:\\serv_log.txt", "wb");
 void print_log(const char* _Format, ...)
 {
@@ -44,14 +47,22 @@ void print_log(const char* _Format, ...)
     fflush(f_logs);
 }
 #else
+#define ENGINE_LOG NULL
 void print_log(const char* _Format, ...) {}
 #endif
+
+BOOL                  bWasFail = false;
 
 SERVICE_STATUS        g_ServiceStatus = { 0 };
 SERVICE_STATUS_HANDLE g_StatusHandle = NULL;
 HANDLE                hThread = INVALID_HANDLE_VALUE;
 HANDLE                g_ServiceStopEvent = INVALID_HANDLE_VALUE;
 HANDLE                hNamedPipe = INVALID_HANDLE_VALUE;
+
+UINT8 MBs, CPUs, GPUs;
+DataWallEngine::MotherboardInfo* mInfo;
+DataWallEngine::ProcessorInfo* pInfo;
+DataWallEngine::VideoAdapterInfo* vInfo;
 
 bool ReadString(char* output) 
 {
@@ -113,7 +124,7 @@ START:
 
     if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
     {
-        print_log("Data Wall Service: ServiceMain: SetServiceStatus returned error");
+        print_log("ServiceMain: SetServiceStatus returned error");
     }
 
     /*
@@ -133,7 +144,7 @@ START:
 
         if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
         {
-            print_log("Data Wall Service: ServiceMain: SetServiceStatus returned error");
+            print_log("ServiceMain: SetServiceStatus returned error");
         }
         return;
     }
@@ -146,7 +157,7 @@ START:
 
     if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
     {
-        print_log("Data Wall Service: ServiceMain: SetServiceStatus returned error");
+        print_log("ServiceMain: SetServiceStatus returned error");
     }
 
     // Start a thread that will perform the main task of the service
@@ -169,7 +180,7 @@ START:
 
     if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
     {
-        print_log("Data Wall Service: ServiceMain: SetServiceStatus returned error");
+        print_log("ServiceMain: SetServiceStatus returned error");
     }
 
     return;
@@ -193,7 +204,7 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
 
         if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
         {
-            print_log("Data Wall Service: ServiceCtrlHandler: SetServiceStatus returned error");
+            print_log("ServiceCtrlHandler: SetServiceStatus returned error");
         }
 
         DataWallEngine::UninitializeEngine();
@@ -219,39 +230,106 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 
     if (hNamedPipe == INVALID_HANDLE_VALUE)
     {
-        print_log("Data Wall Service: Start work: Failed to create named pipe");
+        print_log("Start work: Failed to create named pipe");
+        SET_FAILED;
         return ERROR_PATH_NOT_FOUND;
     }
-    print_log("Data Wall Service: Start work: Created named pipe");
+    print_log("Start work: Created named pipe");
 
-    HRESULT hr = DataWallEngine::InitializeEngine("D:\\engine_log.txt", false, "192.168.56.1", 22876);
+    HRESULT hr = DataWallEngine::InitializeEngine(ENGINE_LOG, false, "192.168.56.1", 22876);
     if (FAILED(hr))
     {
-        print_log("Data Wall Service: Error in initialize engine");
+        print_log("Error in initialize engine");
+        CloseHandle(hNamedPipe);
+        SET_FAILED;
         return hr;
     }
-    print_log("Data Wall Service: Engine initialized");
+    print_log("Engine initialized");
+
+    hr = DataWallEngine::GetSystemConfiguration(MBs, CPUs, GPUs);
+    if (FAILED(hr))
+    {
+        print_log("Error when GetSystemConfiguration");
+        CloseHandle(hNamedPipe);
+        DataWallEngine::UninitializeEngine();
+        SET_FAILED;
+        return hr;
+    }
+    print_log(
+        "In system detected Motherboard - %d, CPU - %d, GPU - %d",
+        MBs,
+        CPUs,
+        GPUs);
+
+    mInfo = new DataWallEngine::MotherboardInfo[MBs];
+    pInfo = new DataWallEngine::ProcessorInfo[CPUs];
+    vInfo = new DataWallEngine::VideoAdapterInfo[GPUs];
+
+    hr = DataWallEngine::GetMotherboardInfo(mInfo, MBs);
+    if (FAILED(hr))
+    {
+        print_log("Failed to get motherboard info");
+        CloseHandle(hNamedPipe);
+        DataWallEngine::UninitializeEngine();
+        delete[] mInfo;
+        delete[] pInfo;
+        delete[] vInfo;
+        SET_FAILED;
+        return hr;
+    }
+
+    hr = DataWallEngine::GetProcessorInfo(pInfo, MBs);
+    if (FAILED(hr))
+    {
+        print_log("Failed to get CPU info");
+        CloseHandle(hNamedPipe);
+        DataWallEngine::UninitializeEngine();
+        delete[] mInfo;
+        delete[] pInfo;
+        delete[] vInfo;
+        SET_FAILED;
+        return hr;
+    }
+
+    hr = DataWallEngine::GetVideoAdapterInfo(vInfo, MBs);
+    if (FAILED(hr))
+    {
+        print_log("Failed to get GPU info");
+        CloseHandle(hNamedPipe);
+        DataWallEngine::UninitializeEngine();
+        delete[] mInfo;
+        delete[] pInfo;
+        delete[] vInfo;
+        SET_FAILED;
+        return hr;
+    }
 
     if (!ConnectNamedPipe(hNamedPipe, NULL))
     {
-        print_log("Data Wall Service: Failed to connect client to named pipe");
+        print_log("Failed to connect client to named pipe");
+        CloseHandle(hNamedPipe);
+        DataWallEngine::UninitializeEngine();
+        delete[] mInfo;
+        delete[] pInfo;
+        delete[] vInfo;
+        SET_FAILED;
         return ERROR_INVALID_ACCESS;
     }
-    print_log("Data Wall Service: Client connected to named pipe");
+    print_log("Client connected to named pipe");
 
     //  Periodically check if the service has been requested to stop
     while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
     {
         char str[1024];
-        if (!ReadString(str)) break;
-        print_log("Data Wall Service: string from pipe: %s", str);
+        if (!ReadString(str)) BREAK_FAILED
+        print_log("string from pipe: %s", str);
 
         if ((BYTE)str[0] == 230)
         {
             char login[100], passwd[100];
-            if (!ReadString(login)) break;
-            if (!ReadString(passwd)) break;
-            print_log("Data Wall Service: Auth data - %s %s", login, passwd);
+            if (!ReadString(login)) BREAK_FAILED
+            if (!ReadString(passwd)) BREAK_FAILED
+            print_log("Auth data - %s %s", login, passwd);
 
             hr = DataWallEngine::NetworkAuthentication(login, passwd);
             BYTE res_code[2] = "";
@@ -266,16 +344,19 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
                 break;
             }
             
-            if (!WriteString((char*)res_code)) break;
+            if (!WriteString((char*)res_code)) BREAK_FAILED
 
             continue;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     CloseHandle(hNamedPipe);
     DataWallEngine::UninitializeEngine();
+    delete[] mInfo;
+    delete[] pInfo;
+    delete[] vInfo;
     print_log("ServiceWorkerThread stopped");
     return ERROR_SUCCESS;
 }
@@ -292,7 +373,7 @@ int main()
 
     if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
     {
-        print_log("StartServiceCtrlDispatcher(ServiceTable) == FALSE");
+        print_log("Error when StartServiceCtrlDispatcher");
         return GetLastError();
     }
 

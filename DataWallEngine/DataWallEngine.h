@@ -36,6 +36,7 @@ namespace DataWallEngine
         BSTR Caption;
         BSTR Name;
         BSTR VideoProcessor;
+        BSTR DeviceID;
     } VideoAdapterInfo;
 
     typedef UINT32 ContentType;

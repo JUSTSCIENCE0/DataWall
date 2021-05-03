@@ -100,6 +100,8 @@ namespace DataWallClient
                 MessageBox.Show("Auth successfull");
                 AuthPanel.Visible = false;
                 Workspace.Visible = true;
+
+
             }
             else
             {

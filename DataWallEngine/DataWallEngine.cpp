@@ -623,7 +623,7 @@ namespace DataWallEngine
         print_log("Successfull");
 
         int n = 0;
-        print_log("DataWallEngine::GetProcessorInfo - Read INFO");
+        print_log("DataWallEngine::GetVideoAdapterInfo - Read INFO");
         while (pEnumerator && (n < GPUs))
         {
             HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
@@ -653,6 +653,11 @@ namespace DataWallEngine
             hr = pclsObj->Get(L"VideoProcessor", 0, &vtProp, 0, 0);
             print_log("VideoProcessor: %s", convert_w(vtProp.bstrVal));
             info[n].VideoProcessor = vtProp.bstrVal;
+            VariantClear(&vtProp);
+
+            hr = pclsObj->Get(L"PNPDeviceID", 0, &vtProp, 0, 0);
+            print_log("DeviceID: %s", convert_w(vtProp.bstrVal));
+            info[n].DeviceID = vtProp.bstrVal;
             VariantClear(&vtProp);
 
             n++;
