@@ -84,12 +84,12 @@ namespace DataWallServer
                     if (auth_success)
                     {
                         message = GenerateMessage(200, "OK");
-                        log.msg("User " + id.ToString() + "auth success");
+                        log.msg("User " + id.ToString() + " auth success");
                     }
                     else
                     {
                         message = GenerateMessage(255, "Wrong login or password");
-                        log.msg("User " + id.ToString() + "auth failed");
+                        log.msg("User " + id.ToString() + " auth failed");
                     }
 
                     if(!SendMessage(message))

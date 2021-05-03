@@ -127,6 +127,9 @@ void print_log(const char* _Format, ...)
 }
 char* convert_w(BSTR data)
 {
+    if (!data)
+        return "";
+
     size_t len = wcslen(data);
     char* res = new char[len + 1];
     wcstombs(res, data, len);
@@ -589,6 +592,7 @@ namespace DataWallEngine
             VariantClear(&vtProp);
 
             hr = pclsObj->Get(L"ProcessorId", 0, &vtProp, 0, 0);
+            print_log("ProcessorId type %x", vtProp.vt);
             print_log("ProcessorId: %s", convert_w(vtProp.bstrVal));
             info[n].ProcessorId = vtProp.bstrVal;
             VariantClear(&vtProp);

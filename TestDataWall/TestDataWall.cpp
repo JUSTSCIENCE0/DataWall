@@ -20,10 +20,10 @@ TestFunc addNumbers = NULL;
 int main()
 {
     //HRESULT hr;
-    /*UINT8 MBs, CPUs, GPUs;
+    UINT8 MBs, CPUs, GPUs;
     DataWallEngine::MotherboardInfo* mInfo;
     DataWallEngine::ProcessorInfo* pInfo;
-    DataWallEngine::VideoAdapterInfo* vInfo;*/
+    DataWallEngine::VideoAdapterInfo* vInfo;
 
     /*
     HMEMORYMODULE myLib = NULL;
@@ -124,7 +124,7 @@ int main()
     /*hr = DataWallEngine::CalculateHash(data, a, state);
     printf("0x%08x%08x%08x%08x\n", state[0], state[1], state[2], state[3]);*/
 
-    HRESULT hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", true, "192.168.1.8", 22876);
+    HRESULT hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", true, "192.168.56.1", 22876);
     if (FAILED(hr))
     {
         printf("Error!\n");
@@ -132,10 +132,10 @@ int main()
         return hr;
     }
 
-    DataWallEngine::NetworkAuthentication("user", "user");
+    //DataWallEngine::NetworkAuthentication("user", "user");
     //DataWallEngine::NetworkRegistration("user", "password");
 
-    /*hr = DataWallEngine::GetSystemConfiguration(MBs, CPUs, GPUs);
+    hr = DataWallEngine::GetSystemConfiguration(MBs, CPUs, GPUs);
     if (FAILED(hr))
     {
         printf("Error!\n");
@@ -165,7 +165,7 @@ int main()
     {
         printf("Error!\n");
         return hr;
-    }*/
+    }
 
     system("pause");
 

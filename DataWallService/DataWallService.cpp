@@ -63,6 +63,9 @@ UINT8 MBs, CPUs, GPUs;
 DataWallEngine::MotherboardInfo* mInfo;
 DataWallEngine::ProcessorInfo* pInfo;
 DataWallEngine::VideoAdapterInfo* vInfo;
+char Motherboard[1024] = "";
+char CPU[1024] = "";
+char GPU[1024] = "";
 
 bool ReadString(char* output) 
 {
@@ -93,6 +96,17 @@ bool WriteString(char* output)
     }
 
     return true;
+}
+char* convert_w(BSTR data)
+{
+    if (!data)
+        return "";
+
+    size_t len = wcslen(data);
+    char* res = new char[len + 1];
+    wcstombs(res, data, len);
+    res[len] = 0;
+    return res;
 }
 
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv);
@@ -277,6 +291,16 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
         SET_FAILED;
         return hr;
     }
+    size_t offset = 0;
+    for (int i = 0; i < MBs; i++)
+    {
+        sprintf(Motherboard + offset, "%s %s %s ", 
+            convert_w(mInfo[i].Manufacturer), 
+            convert_w(mInfo[i].Product),
+            convert_w(mInfo[i].SerialNumber));
+        offset = strlen(Motherboard);
+    }
+    print_log("Motherboard: %s", Motherboard);
 
     hr = DataWallEngine::GetProcessorInfo(pInfo, MBs);
     if (FAILED(hr))
@@ -290,6 +314,19 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
         SET_FAILED;
         return hr;
     }
+    offset = 0;
+    for (int i = 0; i < CPUs; i++)
+    {
+        sprintf(CPU + offset, "%s %s %ld %s %s ",// 
+            convert_w(pInfo[i].Manufacturer),
+            convert_w(pInfo[i].Name),
+            pInfo[i].NumberOfCores,
+            convert_w(pInfo[i].ProcessorId),
+            convert_w(pInfo[i].SerialNumber)
+        );
+        offset = strlen(CPU);
+    }
+    print_log("CPU: %s", CPU);
 
     hr = DataWallEngine::GetVideoAdapterInfo(vInfo, MBs);
     if (FAILED(hr))
@@ -303,6 +340,18 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
         SET_FAILED;
         return hr;
     }
+    offset = 0;
+    for (int i = 0; i < GPUs; i++)
+    {
+        sprintf(GPU + offset, "%s %s %s %s ",
+            convert_w(vInfo[i].Caption),
+            convert_w(vInfo[i].DeviceID),
+            convert_w(vInfo[i].Name),
+            convert_w(vInfo[i].VideoProcessor)
+            );
+        offset = strlen(GPU);
+    }
+    print_log("GPU: %s", GPU);
 
     if (!ConnectNamedPipe(hNamedPipe, NULL))
     {

@@ -328,6 +328,7 @@ namespace DataWallServer
             this.ConsoleText.Multiline = true;
             this.ConsoleText.Name = "ConsoleText";
             this.ConsoleText.ReadOnly = true;
+            this.ConsoleText.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.ConsoleText.Size = new System.Drawing.Size(754, 389);
             this.ConsoleText.TabIndex = 0;
             // 
