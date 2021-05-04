@@ -409,6 +409,34 @@ namespace DataWallServer
             //}
         }
 
+        public Int64 LoadDevice(string mb, string cpu, string gpu)
+        {
+            string sql = "SELECT id_computer FROM computer " +
+                "WHERE motherboard = '" + mb + "' AND cpu = '" + cpu +
+                "' AND gpu = '" + gpu + "'";
+
+            Int64 result = -1;
+
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                if (reader.Read())
+                    result = Convert.ToInt64(reader["id_computer"]);
+                reader.Close();
+                mtx.ReleaseMutex();
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return -1;
+            }
+
+            return result;
+        }
+
         public bool AddNewDevice(DBDevice device)
         {
             return false;

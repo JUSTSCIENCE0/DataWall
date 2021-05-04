@@ -17,9 +17,10 @@ namespace DataWallServer
         private Logger log;
 
         private Mutex mutex = new Mutex();
-        private Thread handle;
+        private Thread handle, clients_cleaner;
         private DBActions db;
 
+        private bool server_alive = true;
         //private MessageParser parser = new MessageParser();
 
         //public List<Client> unconfirmed;
@@ -40,33 +41,59 @@ namespace DataWallServer
             serverCertificate = X509Certificate.CreateFromCertFile(certFile);
 
             handle = new Thread(ClientsHandler);
+            clients_cleaner = new Thread(CleanDead);
             handle.Start();
+            clients_cleaner.Start();
         }
 
         private void ClientsHandler()
         {
+            bool mtx = false;
             try
             {
-                while (true)
+                while (server_alive)
                 {
                     TcpClient newClient = Listener.AcceptTcpClient();
+                    mutex.WaitOne();
+                    mtx = true;
                     clients.Add(new Client(newClient,
                         ref log,
                         serverCertificate,
                         ref db));
+                    mutex.ReleaseMutex();
+                    mtx = false;
                 }
             }
             catch (Exception)
             {
+                log.msg("Error, when accept new client");
+                if (mtx) mutex.ReleaseMutex();
+            }
+        }
+
+        private void CleanDead()
+        {
+            while(server_alive)
+            {
+                mutex.WaitOne();
+                clients.RemoveAll(client => !client.alive);
+                mutex.ReleaseMutex();
+
+                Thread.Sleep(1000);
             }
         }
 
         public void StopServer()
         {
+            server_alive = false;
             if (Listener != null)
             {
                 Listener.Stop();
             }
+
+            handle.Join();
+            clients_cleaner.Join();
+
             foreach(Client client in clients)
             {
                 client.sslStream.Close();

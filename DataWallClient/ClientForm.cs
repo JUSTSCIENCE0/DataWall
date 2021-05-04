@@ -106,7 +106,6 @@ namespace DataWallClient
             else
             {
                 MessageBox.Show("Auth failed");
-                this.Close();
             }
         }
     }

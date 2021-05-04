@@ -335,7 +335,7 @@ namespace DataWallServer
             // Redriver
             // 
             this.Redriver.Enabled = true;
-            this.Redriver.Interval = 500;
+            this.Redriver.Interval = 1000;
             this.Redriver.Tick += new System.EventHandler(this.Redriver_Tick);
             // 
             // DataWallServer_Main

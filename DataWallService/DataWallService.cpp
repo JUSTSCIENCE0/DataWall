@@ -384,13 +384,14 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
             BYTE res_code[2] = "";
             if (SUCCEEDED(hr))
             {
+                hr = DataWallEngine::SendDeviceConfiguration(Motherboard, CPU, GPU);
+                if (FAILED(hr)) BREAK_FAILED
+
                 res_code[0] = 200;
             }
             else
             {
                 res_code[0] = 255;
-                WriteString((char*)res_code);
-                break;
             }
             
             if (!WriteString((char*)res_code)) BREAK_FAILED

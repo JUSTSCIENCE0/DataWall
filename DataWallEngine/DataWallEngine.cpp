@@ -843,6 +843,35 @@ namespace DataWallEngine
         return S_OK;
     }
 
+    HRESULT SendDeviceConfiguration(const char* mb, const char* cpu, const char* gpu)
+    {
+        if (!Initialized)
+            return E_FAIL;
+
+        print_log("Start send device config");
+        size_t buf_size = strlen(mb) + strlen(cpu) + strlen(gpu) + 4;
+        BYTE* buffer = new BYTE[buf_size];
+        memset(buffer, 0, buf_size);
+
+        size_t offset = 1;
+        buffer[0] = 250; //code send device config
+        memcpy(buffer + offset, mb, strlen(mb));
+        offset += strlen(mb) + 1;
+        memcpy(buffer + offset, cpu, strlen(cpu));
+        offset += strlen(cpu) + 1;
+        memcpy(buffer + offset, gpu, strlen(gpu));
+
+        if (SendPacket(buffer, (int)buf_size) != buf_size)
+        {
+            print_log("Failed to send device config");
+            delete[] buffer;
+            return E_FAIL;
+        }
+
+        delete[] buffer;
+        return S_OK;
+    }
+
     HRESULT PackInContainer(BYTE* data, INT32 size, ContentType type, BYTE* key, const char* container_name)
     {
         int sz16;

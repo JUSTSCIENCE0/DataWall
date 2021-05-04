@@ -15,13 +15,15 @@ namespace DataWallServer
         public bool alive;
 
         public SslStream sslStream;
-        private UInt64 id = 0;
+        private string id = "0";
         private Logger log;
 
         private Mutex mutex;
         private Thread clientThread;
         private DBActions db;
         private Random rnd = new Random();
+
+        private bool authenticated = false;
 
         public Client(
             TcpClient client,
@@ -48,6 +50,9 @@ namespace DataWallServer
                     + " connected at port " +
                     ((IPEndPoint)client.Client.RemoteEndPoint).Port);
 
+                id = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString() + ":" +
+                    ((IPEndPoint)client.Client.RemoteEndPoint).Port.ToString();
+
                 clientThread = new Thread(ClientHandler);
                 clientThread.Start();
                 alive = true;
@@ -61,81 +66,116 @@ namespace DataWallServer
             }
         }
 
+        private void SetInactive()
+        {
+            if (authenticated)
+            {
+                db.SetUserActive(id, false);
+            }
+        }
+
         private void ClientHandler()
         {
-            byte[] data = GetMessage();
-            if (data == null)
-                return;
-
-            if (data[0] == 230)
+            while (alive)
             {
-                log.msg("User " + id.ToString() + "start auth");
-
-                try
-                {
-                    int nick_size = Array.IndexOf(data, (byte)0x00) - 1;
-                    int pass_size = 64;
-
-                    string nick = Encoding.UTF8.GetString(data, 1, nick_size);
-                    string pass_hash = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
-
-                    byte[] message;
-                    bool auth_success = db.AuthentificateUser(nick, pass_hash);
-                    if (auth_success)
-                    {
-                        message = GenerateMessage(200, "OK");
-                        log.msg("User " + id.ToString() + " auth success");
-                    }
-                    else
-                    {
-                        message = GenerateMessage(255, "Wrong login or password");
-                        log.msg("User " + id.ToString() + " auth failed");
-                    }
-
-                    if(!SendMessage(message))
-                        throw new Exception("Error send message");
-
-                    if (!auth_success)
-                        throw new Exception("User sended wrong authentification data");
-                }
-                catch (Exception exp)
-                {
-                    log.msg("Error at user " + id.ToString() + " " + exp.Message);
-                    alive = false;
-                    return;
-                }
-            }
-
-            if (data[0] == 240) // registration
-            {
-                try
-                {
-                    int nick_size = Array.IndexOf(data, (byte)0x00) - 1;
-                    int pass_size = Array.IndexOf(data, (byte)0x00, nick_size + 2) - nick_size - 2;
-
-                    string nick = Encoding.UTF8.GetString(data, 1, nick_size);
-                    string passwd = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
-
-                    //string pas_hash = passwd.GetHashCode().ToString();
-
-                    //if (!db.RegisterNewUser(user))
-                    //    throw new Exception("DataBase Error");
-                }
-                catch(Exception exp)
-                {
-                    log.msg("Error at user " + id.ToString() + " " + exp.Message);
-                    alive = false;
-                    return;
-                }
-
-
-            }
-
-            while (true)
-            {
-                data = GetMessage();
+                byte[] data = GetMessage();
                 if (data == null)
                     return;
+
+                if (data[0] == 230) //authication
+                {
+                    log.msg("User '" + id + "' start auth");
+
+                    try
+                    {
+                        int nick_size = Array.IndexOf(data, (byte)0x00) - 1;
+                        int pass_size = 64;
+
+                        string nick = Encoding.UTF8.GetString(data, 1, nick_size);
+                        string pass_hash = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
+
+                        byte[] message;
+                        authenticated = db.AuthentificateUser(nick, pass_hash);
+                        if (authenticated)
+                        {
+                            message = GenerateMessage(200, "OK");
+                            id = nick;
+                            db.SetUserActive(id, true);
+                            log.msg("User '" + id + "' auth success");
+                        }
+                        else
+                        {
+                            message = GenerateMessage(255, "Wrong login or password");
+                            log.msg("User '" + id + "' auth failed");
+                        }
+
+                        if (!SendMessage(message))
+                            throw new Exception("Error send message");
+
+                        continue;
+                    }
+                    catch (Exception exp)
+                    {
+                        log.msg("Error at user '" + id + "' " + exp.Message);
+                        alive = false;
+                        SetInactive();
+                        return;
+                    }
+                }
+
+                if (data[0] == 240) // registration
+                {
+                    try
+                    {
+                        int nick_size = Array.IndexOf(data, (byte)0x00) - 1;
+                        int pass_size = Array.IndexOf(data, (byte)0x00, nick_size + 2) - nick_size - 2;
+
+                        string nick = Encoding.UTF8.GetString(data, 1, nick_size);
+                        string passwd = Encoding.UTF8.GetString(data, nick_size + 2, pass_size);
+
+                        //string pas_hash = passwd.GetHashCode().ToString();
+
+                        //if (!db.RegisterNewUser(user))
+                        //    throw new Exception("DataBase Error");
+
+                        continue;
+                    }
+                    catch (Exception exp)
+                    {
+                        log.msg("Error at user '" + id + "' " + exp.Message);
+                        alive = false;
+                        return;
+                    }
+                }
+
+                if (data[0] == 250) // recieved PC config
+                {
+                    log.msg("User '" + id + "' sended PC config");
+
+                    try
+                    {
+                        int mb_size = Array.IndexOf(data, (byte)0x00) - 1;
+                        int cpu_size = Array.IndexOf(data, (byte)0x00, mb_size + 2) -
+                            mb_size - 2;
+                        int gpu_size = Array.IndexOf(data, (byte)0x00,
+                            mb_size + cpu_size + 3) - mb_size - cpu_size - 3;
+
+                        string mb = Encoding.UTF8.GetString(data, 1, mb_size);
+                        string cpu = Encoding.UTF8.GetString(data, mb_size + 2, cpu_size);
+                        string gpu = Encoding.UTF8.GetString(data, mb_size + cpu_size + 3, gpu_size);
+
+                        log.msg("User '" + id + "' sended mb info: " + mb);
+                        log.msg("User '" + id + "' sended cpu info: " + cpu);
+                        log.msg("User '" + id + "' sended gpu info: " + gpu);
+                    }
+                    catch (Exception exp)
+                    {
+                        log.msg("Error at user '" + id + "' " + exp.Message);
+                        alive = false;
+                        SetInactive();
+                        return;
+                    }
+                }
             }
         }
 
@@ -147,6 +187,8 @@ namespace DataWallServer
             try
             {
                 code = sslStream.Read(size, 0, 4);
+                if (code == 0)
+                    throw new Exception("User disconnected");
                 if (code != 4)
                     throw new Exception("Wrong input message header");
 
@@ -160,8 +202,9 @@ namespace DataWallServer
             }
             catch(Exception exp)
             {
-                log.msg("Error at user " + id.ToString() + " " + exp.Message);
+                log.msg("Error at user '" + id + "' " + exp.Message);
                 alive = false;
+                SetInactive();
                 return null;
             }
         }
@@ -178,8 +221,9 @@ namespace DataWallServer
             }
             catch (Exception exp)
             {
-                log.msg("Error at user " + id.ToString() + " " + exp.Message);
+                log.msg("Error at user '" + id + "' " + exp.Message);
                 alive = false;
+                SetInactive();
                 return false;
             }
 

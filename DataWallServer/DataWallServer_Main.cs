@@ -55,6 +55,42 @@ namespace DataWallServer
         private void Redriver_Tick(object sender, EventArgs e)
         {
             ConsoleText.Text += log.print();
+
+            if (ShowAll.Checked)
+                DrawActivitiesTable(ActivityType.ALL_USERS);
+            else if (ShowActive.Checked)
+                DrawActivitiesTable(ActivityType.ACTIVE_ONLY);
+            else if (ShowInactive.Checked)
+                DrawActivitiesTable(ActivityType.INACTIVE_ONLY);
+
+            if (UsersList.SelectedItem != null)
+            {
+                string login = UsersList.SelectedItem.ToString();
+                List<DBDevice> comps = db.LoadUserDevices(login);
+                List<DBUnit> soft = db.LoadUserLibrary(login);
+
+                SoftDataGrid.Rows.Clear();
+                DeviceDataGrid.Rows.Clear();
+
+                foreach (DBDevice computer in comps)
+                {
+                    DeviceDataGrid.Rows.Add(
+                        computer.id_computer,
+                        computer.active,
+                        computer.cpu,
+                        computer.motherboard,
+                        computer.gpu);
+                }
+
+                foreach (DBUnit software in soft)
+                {
+                    SoftDataGrid.Rows.Add(
+                        software.id_software,
+                        software.active,
+                        software.name,
+                        software.product_code);
+                }
+            }
         }
 
         private void DataWallServer_Main_FormClosing(object sender, FormClosingEventArgs e)

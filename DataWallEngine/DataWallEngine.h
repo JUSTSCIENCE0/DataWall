@@ -50,11 +50,11 @@ namespace DataWallEngine
     
     extern "C" DATAWALLENGINE_API HRESULT NetworkAuthentication(const char* nickname, const char* password);
     extern "C" DATAWALLENGINE_API HRESULT NetworkRegistration(const char* nickname, const char* password);
+    extern "C" DATAWALLENGINE_API HRESULT SendDeviceConfiguration(const char* mb, const char* cpu, const char* gpu);
 
     extern "C" DATAWALLENGINE_API HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key);
     extern "C" DATAWALLENGINE_API HRESULT DecryptData(BYTE * data, INT32 size, BYTE * key);
     extern "C" DATAWALLENGINE_API HRESULT CalculateHash(BYTE * data, UINT64 size, BYTE* state);
-    //extern "C" DATAWALLENGINE_API HRESULT NetworkAuthentication();
 
     extern "C" DATAWALLENGINE_API HRESULT PackInContainer(BYTE* data, INT32 size, ContentType type, BYTE* key, const char* container_name);
     extern "C" DATAWALLENGINE_API HRESULT ReadFromContainer(const char* container_name, BYTE* key, BYTE* &data, INT32 &size, ContentType &type);
