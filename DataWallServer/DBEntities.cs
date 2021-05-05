@@ -227,7 +227,7 @@ namespace DataWallServer
                 {
                     result.Add(new DBDevice
                     {
-                        id_computer = Convert.ToUInt64(reader["computer.id_computer"]),
+                        id_computer = Convert.ToUInt64(reader["id_computer"]),
                         cpu = reader["cpu"].ToString(),
                         motherboard = reader["motherboard"].ToString(),
                         gpu = reader["gpu"].ToString(),
@@ -273,7 +273,7 @@ namespace DataWallServer
             }
         }
 
-        public bool SetDeviceActive(UInt64 device_id, bool state)
+        public bool SetDeviceActive(Int64 device_id, bool state)
         {
             int istate;
             if (state)
@@ -424,6 +424,8 @@ namespace DataWallServer
                 MySqlDataReader reader = command.ExecuteReader();
                 if (reader.Read())
                     result = Convert.ToInt64(reader["id_computer"]);
+                else
+                    result = -1;
                 reader.Close();
                 mtx.ReleaseMutex();
             }
@@ -439,32 +441,78 @@ namespace DataWallServer
 
         public bool AddNewDevice(DBDevice device)
         {
-            return false;
-            //int active = 0;
-            //if (device.active)
-            //    active = 1;
+            int active = 0;
+            if (device.active)
+                active = 1;
 
-            //string sql = "INSERT INTO devices SET" +
-            //    " id_user = " + device.id_user +
-            //    ", cpu = '" + device.cpu +
-            //    "', motherboard = '" + device.motherboard +
-            //    "', gpu = '" + device.gpu +
-            //    "', active = " + active.ToString();
+            string sql = "INSERT INTO computer SET" +
+                " cpu = '" + device.cpu +
+                "', motherboard = '" + device.motherboard +
+                "', gpu = '" + device.gpu +
+                "', active = " + active.ToString();
 
-            //try
-            //{
-            //    mtx.WaitOne();
-            //    MySqlCommand command = new MySqlCommand(sql, conn);
-            //    command.ExecuteNonQuery();
-            //    mtx.ReleaseMutex();
-            //    return true;
-            //}
-            //catch (Exception exp)
-            //{
-            //    log.msg("Database error - " + exp.Message + " for query :" + sql);
-            //    mtx.ReleaseMutex();
-            //    return false;
-            //}
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                mtx.ReleaseMutex();
+                return true;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
+        }
+
+        public bool CheckDeviceUser(Int64 id_device, string user)
+        {
+            string sql = "SELECT * from user_comp " +
+                "WHERE id_user = '" + user + "' " +
+                "AND id_computer = " + id_device.ToString();
+
+            bool result = false;
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                result = reader.Read();
+                reader.Close();
+                mtx.ReleaseMutex();
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
+
+            return result;
+        }
+
+        public bool CorrelateUserDevice(Int64 id_device, string user)
+        {
+            string sql = "INSERT INTO user_comp SET" +
+                " id_user = '" + user +
+                "', id_computer = " + id_device.ToString();
+
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                mtx.ReleaseMutex();
+                return true;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
         }
 
         public bool AddNewUnit(DBUnit unit)

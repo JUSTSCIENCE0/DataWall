@@ -7,6 +7,7 @@ using System.Net.Security;
 using System.Security.Authentication;
 using System.Threading;
 using System.Text;
+using System.Collections.Generic;
 
 namespace DataWallServer
 {
@@ -24,6 +25,7 @@ namespace DataWallServer
         private Random rnd = new Random();
 
         private bool authenticated = false;
+        private Int64 device = -1;
 
         public Client(
             TcpClient client,
@@ -71,6 +73,10 @@ namespace DataWallServer
             if (authenticated)
             {
                 db.SetUserActive(id, false);
+            }
+            if (device != -1)
+            {
+                db.SetDeviceActive(device, false);
             }
         }
 
@@ -150,6 +156,9 @@ namespace DataWallServer
 
                 if (data[0] == 250) // recieved PC config
                 {
+                    if (!authenticated)
+                        continue;
+
                     log.msg("User '" + id + "' sended PC config");
 
                     try
@@ -167,6 +176,34 @@ namespace DataWallServer
                         log.msg("User '" + id + "' sended mb info: " + mb);
                         log.msg("User '" + id + "' sended cpu info: " + cpu);
                         log.msg("User '" + id + "' sended gpu info: " + gpu);
+
+                        device = db.LoadDevice(mb, cpu, gpu);
+                        if (device == -1)
+                        {
+                            DBDevice dev_config = new DBDevice();
+                            dev_config.active = true;
+                            dev_config.cpu = cpu;
+                            dev_config.motherboard = mb;
+                            dev_config.gpu = gpu;
+
+                            if (!db.AddNewDevice(dev_config))
+                                throw new Exception("Failed to add the device to the database");
+
+                            device = db.LoadDevice(mb, cpu, gpu);
+                            if (device == -1)
+                                throw new Exception("Failed to load device from database");
+                        }
+
+                        if(!db.CheckDeviceUser(device, id))
+                        {
+                            if (!db.CorrelateUserDevice(device, id))
+                                throw new Exception("Failed to correlate device and user");
+                        }
+
+                        if (!db.SetDeviceActive(device, true))
+                            throw new Exception("Failed to activate device");
+
+                        continue;
                     }
                     catch (Exception exp)
                     {
@@ -175,6 +212,33 @@ namespace DataWallServer
                         SetInactive();
                         return;
                     }
+                }
+
+                if (data[0] == 100)
+                {
+                    if (!authenticated)
+                    {
+                        try
+                        {
+                            byte[] err_mes = GenerateMessage(255,
+                                "User don't authenticated");
+                            if (!SendMessage(err_mes))
+                                throw new Exception("Error send message");
+
+                            continue;
+                        }
+                        catch (Exception exp)
+                        {
+                            log.msg("Error at user '" + id + "' " + exp.Message);
+                            alive = false;
+                            SetInactive();
+                            return;
+                        }
+                    }
+
+                    List<DBUnit> result = db.LoadUserLibrary(id);
+
+
                 }
             }
         }

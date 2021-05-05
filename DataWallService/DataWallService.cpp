@@ -398,6 +398,19 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 
             continue;
         }
+        if ((BYTE)str[0] == 100)
+        {
+            print_log("Request library");
+            DataWallEngine::LibraryUnit* library = NULL;
+            int library_size;
+            hr = DataWallEngine::RequestLibrary(library, library_size);
+            if (FAILED(hr))
+            {
+                print_log("Error when reqyest library");
+                BREAK_FAILED
+            }
+
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }

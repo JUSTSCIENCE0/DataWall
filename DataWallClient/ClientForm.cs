@@ -101,7 +101,7 @@ namespace DataWallClient
                 AuthPanel.Visible = false;
                 Workspace.Visible = true;
 
-
+                SendCode(100);
             }
             else
             {

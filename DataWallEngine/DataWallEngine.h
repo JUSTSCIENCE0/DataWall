@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <string>
 
 #define DATA_WALL_CODE 0x4C575444 // DTWL
 #define CONTENT_DLL    0x4C4C44   // DLL
@@ -39,6 +40,11 @@ namespace DataWallEngine
         BSTR DeviceID;
     } VideoAdapterInfo;
 
+    typedef struct {
+        std::string name;
+        UINT64 code;
+    } LibraryUnit;
+
     typedef UINT32 ContentType;
 
     extern "C" DATAWALLENGINE_API HRESULT InitializeEngine(const char* logfile, bool log_to_stdout, const char* server_addr, UINT16 port);
@@ -51,6 +57,7 @@ namespace DataWallEngine
     extern "C" DATAWALLENGINE_API HRESULT NetworkAuthentication(const char* nickname, const char* password);
     extern "C" DATAWALLENGINE_API HRESULT NetworkRegistration(const char* nickname, const char* password);
     extern "C" DATAWALLENGINE_API HRESULT SendDeviceConfiguration(const char* mb, const char* cpu, const char* gpu);
+    extern "C" DATAWALLENGINE_API HRESULT RequestLibrary(LibraryUnit* &library, int &number);
 
     extern "C" DATAWALLENGINE_API HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key);
     extern "C" DATAWALLENGINE_API HRESULT DecryptData(BYTE * data, INT32 size, BYTE * key);

@@ -869,6 +869,24 @@ namespace DataWallEngine
         }
 
         delete[] buffer;
+        print_log("Success");
+        return S_OK;
+    }
+
+    HRESULT RequestLibrary(LibraryUnit*& library, int& number)
+    {
+        if (!Initialized)
+            return E_FAIL;
+
+        print_log("Start requst library");
+        BYTE req_code[1] = { 100 };
+        if (SendPacket(req_code, 1) != 1)
+        {
+            print_log("Failed to send requst");
+            return E_FAIL;
+        }
+
+        print_log("Success");
         return S_OK;
     }
 
