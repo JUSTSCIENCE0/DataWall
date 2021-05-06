@@ -886,6 +886,37 @@ namespace DataWallEngine
             return E_FAIL;
         }
 
+        BYTE* answer = NULL;
+        BYTE* pntr = NULL;
+        int ans_size = 0;
+        if (RecvPacket(answer, ans_size))
+        {
+            print_log("Failed to recv library from server");
+            return E_FAIL;
+        }
+
+        if (answer[0] != 200)
+        {
+            print_log("Server sent an error code: %s", answer + 1);
+            delete[] answer;
+            return E_FAIL;
+        }
+
+        pntr = answer + 1;
+        number = *(int*)(pntr);
+        library = new LibraryUnit[number];
+        print_log("User have %d units in library", number);
+        pntr += 4;
+
+        for (int i = 0; i < number; i++)
+        {
+            library[i].code = *(UINT64*)pntr;
+            pntr += 8;
+            library[i].name = std::string((const char*)pntr);
+            pntr += strlen((const char*)pntr);
+        }
+
+        delete[] answer;
         print_log("Success");
         return S_OK;
     }

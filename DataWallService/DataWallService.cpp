@@ -410,6 +410,14 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
                 BREAK_FAILED
             }
 
+            for (int i = 0; i < library_size; i++)
+                print_log("Library unit: %d - %s, code %ld",
+                    i + 1,
+                    library->name.c_str(),
+                    library->code);
+
+            std::string str_libsize = std::to_string(library_size);
+            if (!WriteString((char*)str_libsize.c_str())) BREAK_FAILED
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

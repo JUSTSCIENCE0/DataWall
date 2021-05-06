@@ -236,9 +236,45 @@ namespace DataWallServer
                         }
                     }
 
-                    List<DBUnit> result = db.LoadUserLibrary(id);
+                    try
+                    {
+                        List<DBUnit> result = db.LoadUserLibrary(id);
 
+                        int answ_size = 5;
+                        int offset = 5;
+                        foreach (DBUnit unit in result)
+                        {
+                            answ_size += (9 + Encoding.UTF8.GetBytes(unit.name).Length);
+                        }
 
+                        byte[] answer = new byte[answ_size];
+
+                        answer[0] = 200;
+                        byte[] lib_size = BitConverter.GetBytes(result.Count);
+                        Array.Copy(lib_size, 0, answer, 1, 4);
+
+                        foreach (DBUnit unit in result)
+                        {
+                            byte[] unit_size = BitConverter.GetBytes(unit.product_code);
+                            Array.Copy(unit_size, 0, answer, offset, 8);
+                            offset += 8;
+                            byte[] unit_name = Encoding.UTF8.GetBytes(unit.name);
+                            Array.Copy(unit_name, 0, answer, offset, unit_name.Length);
+                            offset += unit_name.Length;
+                            answer[offset] = 0;
+                            offset += 1;
+                        }
+
+                        if (!SendMessage(answer))
+                            throw new Exception("Error when send library");
+                    }
+                    catch (Exception exp)
+                    {
+                        log.msg("Error at user '" + id + "' " + exp.Message);
+                        alive = false;
+                        SetInactive();
+                        return;
+                    }
                 }
             }
         }

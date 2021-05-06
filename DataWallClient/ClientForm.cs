@@ -102,6 +102,7 @@ namespace DataWallClient
                 Workspace.Visible = true;
 
                 SendCode(100);
+                //RecvMessage();
             }
             else
             {
