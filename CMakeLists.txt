@@ -10,6 +10,7 @@ add_subdirectory(DataWallEngine)
 add_subdirectory(DataWallService)
 add_subdirectory(DataWallServer)
 add_subdirectory(TestDataWall)
+add_subdirectory(TestDLL)
 
 #${EXECUTABLE_OUTPUT_PATH}
 #
