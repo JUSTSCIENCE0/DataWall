@@ -11,9 +11,27 @@ using System.IO.Pipes;
 
 namespace DataWallClient
 {
+    struct Unit
+    {
+        public UInt64 code;
+        public string name;
+
+        public Unit(UInt64 _code, string _name)
+        {
+            code = _code;
+            name = _name;
+        }
+
+        public override string ToString()
+        {
+            return code.ToString() + " " + name;
+        }
+    }
+
     public partial class ClientForm : Form
     {
         private NamedPipeClientStream pipeClient;
+        private List<Unit> lib_units = new List<Unit>();
 
         private void SendMessage(string message)
         {
@@ -46,7 +64,8 @@ namespace DataWallClient
                 return 255;
 
             int result = pipeClient.ReadByte();
-            if (result == -1)
+            int EoS = pipeClient.ReadByte();
+            if (result == -1 || EoS != 0)
                 return 255;
 
             return (byte)result;
@@ -90,23 +109,46 @@ namespace DataWallClient
 
         private void Enter_Click(object sender, EventArgs e)
         {
-            SendCode(230);
-            SendMessage(Login.Text);
-            SendMessage(password.Text);
-
-            byte code = RecvCode();
-            if (code == 200)
+            try
             {
-                MessageBox.Show("Auth successfull");
-                AuthPanel.Visible = false;
-                Workspace.Visible = true;
+                SendCode(230);
+                SendMessage(Login.Text);
+                SendMessage(password.Text);
 
-                SendCode(100);
-                //RecvMessage();
+                byte code = RecvCode();
+                if (code == 200)
+                {
+                    MessageBox.Show("Auth successfull");
+                    AuthPanel.Visible = false;
+                    Workspace.Visible = true;
+
+                    SendCode(100);
+
+                    byte answ_code = RecvCode();
+                    if (answ_code == 200)
+                    {
+                        string str_lib_size = RecvMessage();
+                        int lib_size = Convert.ToInt32(str_lib_size);
+                        for (int i=0; i<lib_size; i++)
+                        {
+                            string unit_code = RecvMessage();
+                            string unit_name = RecvMessage();
+                            Unit current_unit = new Unit(
+                                Convert.ToUInt64(unit_code),
+                                unit_name);
+                            lib_units.Add(current_unit);
+                            LibraryList.Items.Add(current_unit);
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Auth failed");
+                }
             }
-            else
+            catch (Exception exp)
             {
-                MessageBox.Show("Auth failed");
+                MessageBox.Show(exp.Message, "Error");
             }
         }
     }

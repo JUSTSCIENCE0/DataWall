@@ -95,6 +95,13 @@ bool WriteString(char* output)
         return false;
     }
 
+    BYTE nl = 0;
+    if (!WriteFile(hNamedPipe, &nl, 1, nullptr, NULL))
+    {
+        print_log("Error when write to named pipe");
+        return false;
+    }
+
     return true;
 }
 char* convert_w(BSTR data)
@@ -404,11 +411,7 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
             DataWallEngine::LibraryUnit* library = NULL;
             int library_size;
             hr = DataWallEngine::RequestLibrary(library, library_size);
-            if (FAILED(hr))
-            {
-                print_log("Error when reqyest library");
-                BREAK_FAILED
-            }
+            if (FAILED(hr)) BREAK_FAILED
 
             for (int i = 0; i < library_size; i++)
                 print_log("Library unit: %d - %s, code %ld",
@@ -416,8 +419,19 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
                     library->name.c_str(),
                     library->code);
 
+            BYTE ok_answ[2] = { 200, 0 };
             std::string str_libsize = std::to_string(library_size);
+            if (!WriteString((char*)ok_answ)) BREAK_FAILED
             if (!WriteString((char*)str_libsize.c_str())) BREAK_FAILED
+
+            for (int i = 0; i < library_size; i++)
+            {
+                std::string unit_code = std::to_string(library->code);
+                if (!WriteString((char*)unit_code.c_str())) BREAK_FAILED
+                if (!WriteString((char*)library->name.c_str())) BREAK_FAILED
+            }
+
+            continue;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -429,6 +443,11 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
     delete[] pInfo;
     delete[] vInfo;
     print_log("ServiceWorkerThread stopped");
+    if (bWasFail)
+    {
+        BYTE err_answ[2] = { 255, 0 };
+        WriteString((char*)err_answ);
+    }
     return ERROR_SUCCESS;
 }
 
