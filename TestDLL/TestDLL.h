@@ -5,3 +5,10 @@
 #else
 #define TESTDLL_EXPORTS_API __declspec(dllimport)
 #endif
+
+extern "C" TESTDLL_EXPORTS_API 
+int InitializeWindow(
+    HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPSTR     lpCmdLine,
+    int       nCmdShow);

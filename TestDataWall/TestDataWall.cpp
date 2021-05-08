@@ -1,9 +1,17 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 
-#include <iostream>
-#include <ctime>
-#include "../DataWallEngine/DataWallEngine.h"
-#include "../DataWallLoader/DataWallLoader.h"
+#include <windows.h>
+#include <stdlib.h>
+#include <string.h>
+#include <tchar.h>
+
+#include <stdio.h>
+
+// Global variables
+
+//HINSTANCE hInst;
+//static TCHAR szWindowClass[] = _T("DesktopApp");
+//static TCHAR szTitle[] = _T("TestSoft");
 
 void print(BYTE* data, int size)
 {
@@ -12,21 +20,52 @@ void print(BYTE* data, int size)
     printf("\n");
 }
 
-#define SIZE lib_size//56
-
-typedef int (CALLBACK* TestFunc)(int, int);
-TestFunc addNumbers = NULL;
-
-int main()
+/*LRESULT CALLBACK WndProc(
+    _In_ HWND   hWnd,
+    _In_ UINT   message,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
+)
 {
-    //HRESULT hr;
-    UINT8 MBs, CPUs, GPUs;
-    DataWallEngine::MotherboardInfo* mInfo;
-    DataWallEngine::ProcessorInfo* pInfo;
-    DataWallEngine::VideoAdapterInfo* vInfo;
+    PAINTSTRUCT ps;
+    HDC hdc;
+    TCHAR greeting[] = _T("Hello, Windows desktop!");
 
-    /*
-    HMEMORYMODULE myLib = NULL;
+    switch (message)
+    {
+    case WM_PAINT:
+        hdc = BeginPaint(hWnd, &ps);
+
+        // Here your application is laid out.
+        // For this introduction, we just print out "Hello, Windows desktop!"
+        // in the top left corner.
+        TextOut(hdc,
+            5, 5,
+            greeting, _tcslen(greeting));
+        // End application-specific layout section.
+
+        EndPaint(hWnd, &ps);
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+        break;
+    }
+
+    return 0;
+}*/
+
+typedef int (CALLBACK* INITWIND)(HINSTANCE, HINSTANCE, LPSTR, int);
+
+int CALLBACK WinMain(
+    _In_ HINSTANCE hInstance,
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPSTR     lpCmdLine,
+    _In_ int       nCmdShow)
+{
+    /*HMEMORYMODULE myLib = NULL;
     BYTE* key = new BYTE[16];
     for (int i = 0; i < 16; i++)
     {
@@ -38,143 +77,113 @@ int main()
     int res = addNumbers(2, 3);
     printf("%d\n", res);
     DataWallLoader::FreeEncryptedLibrary(myLib);
-    */
-    /*srand(time(0));
-    unsigned int code = rand() % 65536;
-    code <<= 16;
-    code += rand() % 65536;
-    printf("%ld\n", code);*/
-
-    //while (true)
-    //{
-    //    char name[] = "";
-    //    char password[] = "";
-    //    scanf("%s", name);
-    //    scanf("%s", password);
-
-    //    BYTE hash[32] = "";
-    //    printf("\n%s\n", name);
-    //    printf("%s\n", password);
-    //    HRESULT hr = DataWallEngine::CalculateHash((BYTE*)password, strlen(password), hash);
-    //    //print(hash, 32);
-
-    //    std::string path = "D:\\DataWall\\" + std::string(name);
-    //    FILE* f = fopen(path.c_str(), "wb");
-    //    char text[65] = "";
-    //    char* pntr = text;
-    //    for (int i = 0; i < 32; i++, pntr+=2)
-    //    {
-    //        snprintf(pntr, 3, "%02X", hash[i]);
-    //    }
-
-    //    printf("%s\n", text);
-    //    fprintf(f, "%s", text);
-    //    fflush(f);
-    //    fclose(f);
-
-    //}
-    
-    /*FILE* fdll = fopen("D:\\DataWall\\SampleDLL.dll", "rb");
-    if (!fdll)
-    {
-        printf("Error when open file\n");
-        return NULL;
-    }
-
-    fseek(fdll, 0, SEEK_END);
-    size_t lib_size = ftell(fdll);
-    if (!lib_size)
-    {
-        printf("Error when read size\n");
-        fclose(fdll);
-        return NULL;
-    }
-
-    BYTE* data = new BYTE[lib_size];
-    fseek(fdll, 0, SEEK_SET);
-    if (lib_size != fread(data, 1, lib_size, fdll))
-    {
-        printf("Error when fread\n");
-        fclose(fdll);
-        return NULL;
-    }
-    fclose(fdll);*/
-
-    /*for (int i = 0; i < SIZE; i++)
-    {
-        data[i] = (BYTE)i;
-    }*/
-
-    //DataWallEngine::PackInContainer(data, (INT32)SIZE, CONTENT_DLL, key, "D:\\DataWall\\library.pak");
-
-    /*int size;
+    DataWallEngine::PackInContainer(data, (INT32)SIZE, CONTENT_DLL, key, "D:\\DataWall\\library.pak");
+    int size;
     DataWallEngine::ContentType type;
     DataWallEngine::ReadFromContainer("D:\\DataWall\\container.pak", key, data, size, type);
-
     print(data, size);
     printf("\n");*/
+    /*
+    WNDCLASSEX wcex;
 
-    /*hr = DataWallEngine::EncryptData(data, SIZE, key);
-    print(data, SIZE);
-    printf("\n");
+    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
+    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName = NULL;
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 
-    hr = DataWallEngine::DecryptData(data, SIZE, key);
-    print(data, SIZE);*/
-
-    /*hr = DataWallEngine::CalculateHash(data, a, state);
-    printf("0x%08x%08x%08x%08x\n", state[0], state[1], state[2], state[3]);*/
-
-    HRESULT hr = DataWallEngine::InitializeEngine("D:\\logfile.txt", true, "192.168.56.1", 22876);
-    if (FAILED(hr))
+    if (!RegisterClassEx(&wcex))
     {
-        printf("Error!\n");
-        system("pause");
-        return hr;
+        MessageBox(NULL,
+            _T("Call to RegisterClassEx failed!"),
+            _T("Windows Desktop Guided Tour"),
+            NULL);
+
+        return 1;
     }
 
-    //DataWallEngine::NetworkAuthentication("user", "user");
-    //DataWallEngine::NetworkRegistration("user", "password");
-
-    hr = DataWallEngine::GetSystemConfiguration(MBs, CPUs, GPUs);
-    if (FAILED(hr))
+    HWND hWnd = CreateWindow(
+        szWindowClass,
+        szTitle,
+        WS_OVERLAPPEDWINDOW,
+        500, 200,
+        500, 500,
+        NULL,
+        NULL,
+        hInstance,
+        NULL
+    );
+    if (!hWnd)
     {
-        printf("Error!\n");
-        return hr;
+        MessageBox(NULL,
+            _T("Call to CreateWindow failed!"),
+            _T("Windows Desktop Guided Tour"),
+            NULL);
+
+        return 1;
     }
 
-    mInfo = new DataWallEngine::MotherboardInfo[MBs];
-    pInfo = new DataWallEngine::ProcessorInfo[CPUs];
-    vInfo = new DataWallEngine::VideoAdapterInfo[GPUs];
+    ShowWindow(hWnd,
+        nCmdShow);
+    UpdateWindow(hWnd);
 
-    hr = DataWallEngine::GetMotherboardInfo(mInfo, MBs);
-    if (FAILED(hr))
+    // Main message loop:
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
     {
-        printf("Error!\n");
-        return hr;
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
+    */
 
-    hr = DataWallEngine::GetProcessorInfo(pInfo, CPUs);
-    if (FAILED(hr))
+    HINSTANCE hDLL;
+    INITWIND  InitializeWindow;
+    HRESULT hr;
+
+    hDLL = LoadLibrary("TestDLL.dll");
+
+    if (NULL != hDLL)
     {
-        printf("Error!\n");
-        return hr;
+        InitializeWindow = (INITWIND)GetProcAddress(hDLL, "InitializeWindow");
+        if (NULL != InitializeWindow)
+        {
+            // call the function
+            int result = InitializeWindow(hInstance, hPrevInstance,
+                lpCmdLine, nCmdShow);
+
+            if (result)
+            {
+                MessageBox(NULL,
+                    _T("Error when exec function"),
+                    _T("Error"),
+                    NULL);
+            }
+        }
+        else
+        {
+            // report the error
+            MessageBox(NULL,
+                _T("Error when load function"),
+                _T("Error"),
+                NULL);
+        }
+        FreeLibrary(hDLL);
     }
-
-    hr = DataWallEngine::GetVideoAdapterInfo(vInfo, GPUs);
-    if (FAILED(hr))
+    else
     {
-        printf("Error!\n");
-        return hr;
-    }
-
-    system("pause");
-
-    hr = DataWallEngine::UninitializeEngine();
-    if (FAILED(hr))
-    {
-        printf("Error!\n");
-        return hr;
+        MessageBox(NULL,
+            _T("Error when load dll"),
+            _T("Error"),
+            NULL);
     }
 
     printf("Success!\n");
+    return 0;// (int)msg.wParam;
 }
