@@ -5,6 +5,9 @@ HINSTANCE hInst;
 static TCHAR szWindowClass[] = _T("DesktopApp");
 static TCHAR szTitle[] = _T("TestSoft");
 
+HBITMAP hBitmap = NULL;
+TCHAR* greeting = _T("Hello, Windows desktop!");
+
 LRESULT CALLBACK WndProc(
     _In_ HWND   hWnd,
     _In_ UINT   message,
@@ -14,12 +17,35 @@ LRESULT CALLBACK WndProc(
 {
     PAINTSTRUCT ps;
     HDC hdc;
-    TCHAR greeting[] = _T("Hello, Windows desktop!");
+
+    RECT Rect;
+    LONG Width;
+    LONG Height;
 
     switch (message)
     {
+    case WM_CREATE:
+        break;
     case WM_PAINT:
+        BITMAP          bitmap;
+        HDC             hdcMem;
+        HGDIOBJ         oldBitmap;
+
+        GetWindowRect(hWnd, &Rect);
+        Width = Rect.right - Rect.left - 30;
+        Height = Rect.bottom - Rect.top - 50;
+
         hdc = BeginPaint(hWnd, &ps);
+
+        hdcMem = CreateCompatibleDC(hdc);
+        oldBitmap = SelectObject(hdcMem, hBitmap);
+
+        GetObject(hBitmap, sizeof(bitmap), &bitmap);
+        StretchBlt(hdc, 0, 0, Width, Height, 
+            hdcMem, 0, 0, bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
+
+        SelectObject(hdcMem, oldBitmap);
+        DeleteDC(hdcMem);
 
         // Here your application is laid out.
         // For this introduction, we just print out "Hello, Windows desktop!"
@@ -32,6 +58,7 @@ LRESULT CALLBACK WndProc(
         EndPaint(hWnd, &ps);
         break;
     case WM_DESTROY:
+        DeleteObject(hBitmap);
         PostQuitMessage(0);
         break;
     default:
@@ -40,6 +67,28 @@ LRESULT CALLBACK WndProc(
     }
 
     return 0;
+}
+
+void LoadLogoData(BYTE* logo, TCHAR* text )
+{
+    BITMAPFILEHEADER* bmfh;
+    bmfh = (BITMAPFILEHEADER*)logo;
+
+    BITMAPINFOHEADER* bmih;
+    bmih = (BITMAPINFOHEADER*)(logo + sizeof(BITMAPFILEHEADER));
+    BITMAPINFO* bmi;
+    bmi = (BITMAPINFO*)bmih;
+
+    void* bits;
+    bits = (void*)(logo + bmfh->bfOffBits);
+
+    HDC hdc = ::GetDC(NULL);
+
+    hBitmap = CreateDIBitmap(hdc, bmih, CBM_INIT, bits, bmi, DIB_RGB_COLORS);
+
+    ::ReleaseDC(NULL, hdc);
+
+    greeting = _T(text);
 }
 
 int InitializeWindow(
@@ -97,7 +146,7 @@ int InitializeWindow(
         szTitle,
         WS_OVERLAPPEDWINDOW,
         500, 200,
-        500, 500,
+        432, 404,
         NULL,
         NULL,
         hInstance,

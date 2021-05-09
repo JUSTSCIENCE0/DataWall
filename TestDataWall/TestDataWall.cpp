@@ -57,6 +57,7 @@ void print(BYTE* data, int size)
     return 0;
 }*/
 
+typedef void (CALLBACK* LOADLOGODATA)(BYTE*, TCHAR*);
 typedef int (CALLBACK* INITWIND)(HINSTANCE, HINSTANCE, LPSTR, int);
 
 int CALLBACK WinMain(
@@ -145,45 +146,101 @@ int CALLBACK WinMain(
 
     HINSTANCE hDLL;
     INITWIND  InitializeWindow;
+    LOADLOGODATA LoadLogoData;
     HRESULT hr;
 
     hDLL = LoadLibrary("TestDLL.dll");
 
-    if (NULL != hDLL)
-    {
-        InitializeWindow = (INITWIND)GetProcAddress(hDLL, "InitializeWindow");
-        if (NULL != InitializeWindow)
-        {
-            // call the function
-            int result = InitializeWindow(hInstance, hPrevInstance,
-                lpCmdLine, nCmdShow);
-
-            if (result)
-            {
-                MessageBox(NULL,
-                    _T("Error when exec function"),
-                    _T("Error"),
-                    NULL);
-            }
-        }
-        else
-        {
-            // report the error
-            MessageBox(NULL,
-                _T("Error when load function"),
-                _T("Error"),
-                NULL);
-        }
-        FreeLibrary(hDLL);
-    }
-    else
+    if (!hDLL)
     {
         MessageBox(NULL,
             _T("Error when load dll"),
             _T("Error"),
             NULL);
+        return -1;
     }
 
+    LoadLogoData = (LOADLOGODATA)GetProcAddress(hDLL, "LoadLogoData");
+    if (!LoadLogoData)
+    {
+        MessageBox(NULL,
+            _T("Error when load function"),
+            _T("Error"),
+            NULL);
+        FreeLibrary(hDLL);
+        return -1;
+    }
+
+    FILE* fLogo = fopen("D:\\logo.bmp", "rb");
+    if (!fLogo)
+    {
+        MessageBox(NULL,
+            _T("Error when load logo"),
+            _T("Error"),
+            NULL);
+        FreeLibrary(hDLL);
+        return -1;
+    }
+
+    fseek(fLogo, 0, SEEK_END);
+    size_t lSize = ftell(fLogo);
+    rewind(fLogo);
+
+    BYTE* bLogo = new BYTE[lSize];
+    fread(bLogo, 1, lSize, fLogo);
+    fclose(fLogo);
+
+    FILE* fText = fopen("D:\\text.txt", "rb");
+    if (!fText)
+    {
+        MessageBox(NULL,
+            _T("Error when load text"),
+            _T("Error"),
+            NULL);
+        delete[] bLogo;
+        FreeLibrary(hDLL);
+        return -1;
+    }
+
+    fseek(fText, 0, SEEK_END);
+    lSize = (ftell(fText) / sizeof(TCHAR));
+    rewind(fText);
+
+    TCHAR* bText = new TCHAR[lSize];
+    fread(bText, sizeof(TCHAR), lSize, fText);
+    fclose(fText);
+
+    LoadLogoData(bLogo, bText);
+
+    InitializeWindow = (INITWIND)GetProcAddress(hDLL, "InitializeWindow");
+    if (!InitializeWindow)
+    {
+        MessageBox(NULL,
+            _T("Error when load function"),
+            _T("Error"),
+            NULL);
+        delete[] bLogo;
+        FreeLibrary(hDLL);
+        return -1;
+    }
+
+    // call the function
+    int result = InitializeWindow(hInstance, hPrevInstance,
+        lpCmdLine, nCmdShow);
+
+    if (result)
+    {
+        MessageBox(NULL,
+            _T("Error when exec function"),
+            _T("Error"),
+            NULL);
+        delete[] bLogo;
+        FreeLibrary(hDLL);
+        return -1;
+    }
+
+    FreeLibrary(hDLL);
+    delete[] bLogo;
     printf("Success!\n");
     return 0;// (int)msg.wParam;
 }
