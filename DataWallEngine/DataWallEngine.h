@@ -7,6 +7,7 @@
 #define CONTENT_IMAGE  0x474D49   // IMG
 #define CONTENT_TEXT   0x545854   // TXT
 #define CONTENT_SOUND  0x444E53   // SND
+#define CONTENT_BIN    0x4E4942   // BIN
 
 #define WRONG_DATA     0xFD000001
 #define WRONG_CONTENT  0xFD000002

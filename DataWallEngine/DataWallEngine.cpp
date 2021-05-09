@@ -1008,6 +1008,9 @@ namespace DataWallEngine
         case CONTENT_TEXT:
             type = CONTENT_TEXT;
             break;
+        case CONTENT_BIN:
+            type = CONTENT_BIN;
+            break;
         default:
             delete[] header;
             delete NumberPNTR;
