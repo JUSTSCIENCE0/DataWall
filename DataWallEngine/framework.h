@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <ctime>
 #include <iostream>
+#include <list>
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <WinSock2.h>

@@ -137,6 +137,14 @@ char* convert_w(BSTR data)
     return res;
 }
 
+struct soft_file
+{
+    bool need_pack;
+    int pack_type;
+    std::string fname;
+    BYTE* data = NULL;
+};
+
 bool InitializeSockets()
 {
     WSADATA WsaData;
@@ -204,17 +212,25 @@ namespace DataWallEngine
         }
 
         size = *(int*)mes_size;
+        int recv_size = 0;
         buf = new BYTE[size];
-        res = SSL_read(ssl, buf, (int)size);
-        if (res < 0)
+        BYTE* pntr = buf;
+
+        while (recv_size < size)
         {
-            int err = SSL_get_error(ssl, (int)res);
-            if (err == SSL_ERROR_WANT_READ)
-                return 0;
-            if (err == SSL_ERROR_WANT_WRITE)
-                return 0;
-            if (err == SSL_ERROR_ZERO_RETURN || err == SSL_ERROR_SYSCALL || err == SSL_ERROR_SSL)
-                return -1;
+            res = SSL_read(ssl, pntr, (int)size - recv_size);
+            if (res < 0)
+            {
+                int err = SSL_get_error(ssl, (int)res);
+                if (err == SSL_ERROR_WANT_READ)
+                    return 0;
+                if (err == SSL_ERROR_WANT_WRITE)
+                    return 0;
+                if (err == SSL_ERROR_ZERO_RETURN || err == SSL_ERROR_SYSCALL || err == SSL_ERROR_SSL)
+                    return -1;
+            }
+            recv_size += res;
+            pntr += res;
         }
 
         return 0;
@@ -910,6 +926,8 @@ namespace DataWallEngine
 
         for (int i = 0; i < number; i++)
         {
+            library[i].id = *(UINT64*)pntr;
+            pntr += 8;
             library[i].code = *(UINT64*)pntr;
             pntr += 8;
             library[i].name = std::string((const char*)pntr);
@@ -918,6 +936,99 @@ namespace DataWallEngine
 
         delete[] answer;
         print_log("Success");
+        return S_OK;
+    }
+
+    HRESULT InstallSoftware(const char* id, const char* path, BYTE* key)
+    {
+        if (!Initialized)
+            return E_FAIL;
+
+        print_log("Start install software");
+        BYTE req_code[1] = { 110 };
+        if (SendPacket(req_code, 1) != 1)
+        {
+            print_log("Failed to send requst");
+            return E_FAIL;
+        }
+        if (SendPacket((BYTE*)id, strlen(id)) != strlen(id))
+        {
+            print_log("Failed to send id software");
+            return E_FAIL;
+        }
+
+        BYTE* answer = NULL;
+        int ans_size = 0;
+        if (RecvPacket(answer, ans_size))
+        {
+            print_log("Failed to recv answer server");
+            return E_FAIL;
+        }
+
+        if (answer[0] != 200)
+        {
+            print_log("Server sent an error code: %s", answer + 1);
+            delete[] answer;
+            return E_FAIL;
+        }
+
+        BYTE* pntr = answer + 1;
+        print_log("Code %d", *pntr);
+        std::list<soft_file> files;
+        while (*pntr != 255)
+        {
+            if (*pntr == 0)
+            {
+                pntr += 5;
+                std::string fname = std::string((const char*)pntr);
+                pntr += strlen((const char*)pntr) + 1;
+                soft_file cfile;
+                cfile.need_pack = false;
+                cfile.pack_type = 0;
+                cfile.fname = fname;
+
+                files.push_back(cfile);
+            }
+            else if (*pntr == 1)
+            {
+                pntr++;
+                int cnt_code = *(int*)pntr;
+                pntr += 4;
+                std::string fname = std::string((const char*)pntr);
+                pntr += strlen((const char*)pntr) + 1;
+                soft_file cfile;
+                cfile.need_pack = true;
+                cfile.pack_type = cnt_code;
+                cfile.fname = fname;
+
+                files.push_back(cfile);
+            }
+            else
+                break;
+        }
+
+        CreateDirectory(path, NULL);
+        for each (soft_file var in files)
+        {
+            print_log("file type %x name %s - downloading", var.pack_type, var.fname.c_str());
+            BYTE* file_data = NULL;
+            int file_size = 0;
+            RecvPacket(file_data, file_size);
+            print_log("size %d", file_size);
+            std::string file_path = std::string(path) + "\\" + var.fname;
+            
+            FILE* f = fopen(file_path.c_str(), "wb");
+            
+            //TODO: pack there
+            
+            fwrite(file_data, 1, file_size, f);
+            fflush(f);
+            fclose(f);
+
+            delete[] file_data;
+        }
+
+        delete[] answer;
         return S_OK;
     }
 

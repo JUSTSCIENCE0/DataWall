@@ -8,9 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Pipes;
+using System.IO;
+using Microsoft.Win32;
 
 namespace DataWallClient
 {
+
     struct Unit
     {
         public UInt64 code;
@@ -32,6 +35,8 @@ namespace DataWallClient
     {
         private NamedPipeClientStream pipeClient;
         private List<Unit> lib_units = new List<Unit>();
+        private string currentPath = "";
+        private Unit currentUnit;
 
         private void SendMessage(string message)
         {
@@ -104,6 +109,13 @@ namespace DataWallClient
                 Environment.Exit(-1);
             }
 
+            RegistryKey dwKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\DataWall", true);
+            if (dwKey == null)
+            {
+                dwKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\DataWall", true);
+            }
+            dwKey.Close();
+
             InitializeComponent();
         }
 
@@ -150,6 +162,111 @@ namespace DataWallClient
             {
                 MessageBox.Show(exp.Message, "Error");
             }
+        }
+
+        private void LibraryList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (LibraryList.SelectedItem == null)
+                return;
+
+            Unit selectedUnit = (Unit)LibraryList.SelectedItem;
+            RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+            if (soft_key == null)
+            {
+                soft_key = Registry.LocalMachine.CreateSubKey(
+                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+                soft_key.SetValue("Installed", "false");
+                soft_key.SetValue("InstallPath", "");
+            }
+
+            bool Installed = Convert.ToBoolean(soft_key.GetValue("Installed"));
+            string InstallPath = soft_key.GetValue("InstallPath").ToString();
+            currentPath = InstallPath;
+
+            if (!Installed)
+            {
+                Download.Enabled = true;
+                Delete.Enabled = false;
+                Repack.Enabled = false;
+                Check.Enabled = false;
+                Run.Enabled = false;
+            }
+            else
+            {
+                Download.Enabled = false;
+                Delete.Enabled = true;
+                Repack.Enabled = true;
+                Check.Enabled = true;
+                Run.Enabled = true;
+            }
+
+            currentUnit = selectedUnit;
+        }
+
+        private void Download_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+            if (DialogResult.OK != folderBrowser.ShowDialog())
+                return;
+
+            SendCode(110);
+            SendMessage(currentUnit.code.ToString());
+            SendMessage(folderBrowser.SelectedPath + "\\" + currentUnit.name);
+
+            Workspace.Visible = false;
+            WaitPanel.Visible = true;
+
+            byte result = RecvCode();
+
+            Workspace.Visible = true;
+            WaitPanel.Visible = false;
+
+            if (result != 200)
+            {
+                MessageBox.Show("Error when load soft", "Error!");
+                return;
+            }
+
+            MessageBox.Show("Downloaded!", "Success!");
+
+            string installPath = (folderBrowser.SelectedPath + currentUnit.name);
+
+            RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\DataWall\\" + currentUnit.ToString(), true);
+            soft_key.SetValue("Installed", "true");
+            soft_key.SetValue("InstallPath", installPath);
+
+            Download.Enabled = false;
+            Delete.Enabled = true;
+            Repack.Enabled = true;
+            Check.Enabled = true;
+            Run.Enabled = true;
+        }
+
+        private void Delete_Click(object sender, EventArgs e)
+        {
+            RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\DataWall\\" + currentUnit.ToString(), true);
+
+            string InstallPath = soft_key.GetValue("InstallPath").ToString();
+            byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
+            InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
+
+            string codes = "";
+            for (int i = 0; i < InstallPath.Length; i++)
+                codes += ((int)InstallPath[i]).ToString() + " ";
+            MessageBox.Show(codes);
+            Directory.Delete(InstallPath, true);
+            
+            soft_key.SetValue("Installed", "false");
+            soft_key.SetValue("InstallPath", "");
+
+            Download.Enabled = true;
+            Delete.Enabled = false;
+            Repack.Enabled = false;
+            Check.Enabled = false;
+            Run.Enabled = false;
         }
     }
 }

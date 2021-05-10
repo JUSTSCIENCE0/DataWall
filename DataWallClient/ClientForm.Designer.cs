@@ -38,19 +38,22 @@ namespace DataWallClient
             this.Workspace = new System.Windows.Forms.Panel();
             this.tabWorkspace = new System.Windows.Forms.TabControl();
             this.MyLibrary = new System.Windows.Forms.TabPage();
-            this.Store = new System.Windows.Forms.TabPage();
-            this.LibraryList = new System.Windows.Forms.ListBox();
-            this.Download = new System.Windows.Forms.Button();
-            this.Delete = new System.Windows.Forms.Button();
-            this.Check = new System.Windows.Forms.Button();
-            this.Repack = new System.Windows.Forms.Button();
+            this.WaitPanel = new System.Windows.Forms.Panel();
+            this.label3 = new System.Windows.Forms.Label();
             this.Run = new System.Windows.Forms.Button();
-            this.StoreList = new System.Windows.Forms.ListBox();
+            this.Repack = new System.Windows.Forms.Button();
+            this.Check = new System.Windows.Forms.Button();
+            this.Delete = new System.Windows.Forms.Button();
+            this.Download = new System.Windows.Forms.Button();
+            this.LibraryList = new System.Windows.Forms.ListBox();
+            this.Store = new System.Windows.Forms.TabPage();
             this.Add = new System.Windows.Forms.Button();
+            this.StoreList = new System.Windows.Forms.ListBox();
             this.AuthPanel.SuspendLayout();
             this.Workspace.SuspendLayout();
             this.tabWorkspace.SuspendLayout();
             this.MyLibrary.SuspendLayout();
+            this.WaitPanel.SuspendLayout();
             this.Store.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -132,6 +135,7 @@ namespace DataWallClient
             // 
             // MyLibrary
             // 
+            this.MyLibrary.Controls.Add(this.WaitPanel);
             this.MyLibrary.Controls.Add(this.Run);
             this.MyLibrary.Controls.Add(this.Repack);
             this.MyLibrary.Controls.Add(this.Check);
@@ -146,6 +150,87 @@ namespace DataWallClient
             this.MyLibrary.Text = "Библиотека";
             this.MyLibrary.UseVisualStyleBackColor = true;
             // 
+            // WaitPanel
+            // 
+            this.WaitPanel.Controls.Add(this.label3);
+            this.WaitPanel.Location = new System.Drawing.Point(38, 119);
+            this.WaitPanel.Name = "WaitPanel";
+            this.WaitPanel.Size = new System.Drawing.Size(337, 100);
+            this.WaitPanel.TabIndex = 6;
+            this.WaitPanel.Visible = false;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label3.Location = new System.Drawing.Point(37, 34);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(271, 37);
+            this.label3.TabIndex = 0;
+            this.label3.Text = "Installing, please wait";
+            // 
+            // Run
+            // 
+            this.Run.Enabled = false;
+            this.Run.Location = new System.Drawing.Point(306, 327);
+            this.Run.Name = "Run";
+            this.Run.Size = new System.Drawing.Size(121, 41);
+            this.Run.TabIndex = 5;
+            this.Run.Text = "Запустить";
+            this.Run.UseVisualStyleBackColor = true;
+            // 
+            // Repack
+            // 
+            this.Repack.Enabled = false;
+            this.Repack.Location = new System.Drawing.Point(306, 98);
+            this.Repack.Name = "Repack";
+            this.Repack.Size = new System.Drawing.Size(121, 41);
+            this.Repack.TabIndex = 4;
+            this.Repack.Text = "Переупаковать";
+            this.Repack.UseVisualStyleBackColor = true;
+            // 
+            // Check
+            // 
+            this.Check.Enabled = false;
+            this.Check.Location = new System.Drawing.Point(306, 145);
+            this.Check.Name = "Check";
+            this.Check.Size = new System.Drawing.Size(121, 41);
+            this.Check.TabIndex = 3;
+            this.Check.Text = "Проверить файлы";
+            this.Check.UseVisualStyleBackColor = true;
+            // 
+            // Delete
+            // 
+            this.Delete.Enabled = false;
+            this.Delete.Location = new System.Drawing.Point(306, 51);
+            this.Delete.Name = "Delete";
+            this.Delete.Size = new System.Drawing.Size(121, 41);
+            this.Delete.TabIndex = 2;
+            this.Delete.Text = "Удалить";
+            this.Delete.UseVisualStyleBackColor = true;
+            this.Delete.Click += new System.EventHandler(this.Delete_Click);
+            // 
+            // Download
+            // 
+            this.Download.Enabled = false;
+            this.Download.Location = new System.Drawing.Point(306, 4);
+            this.Download.Name = "Download";
+            this.Download.Size = new System.Drawing.Size(121, 41);
+            this.Download.TabIndex = 1;
+            this.Download.Text = "Загрузить";
+            this.Download.UseVisualStyleBackColor = true;
+            this.Download.Click += new System.EventHandler(this.Download_Click);
+            // 
+            // LibraryList
+            // 
+            this.LibraryList.FormattingEnabled = true;
+            this.LibraryList.ItemHeight = 15;
+            this.LibraryList.Location = new System.Drawing.Point(4, 4);
+            this.LibraryList.Name = "LibraryList";
+            this.LibraryList.Size = new System.Drawing.Size(296, 364);
+            this.LibraryList.TabIndex = 0;
+            this.LibraryList.SelectedIndexChanged += new System.EventHandler(this.LibraryList_SelectedIndexChanged);
+            // 
             // Store
             // 
             this.Store.Controls.Add(this.Add);
@@ -158,74 +243,6 @@ namespace DataWallClient
             this.Store.Text = "Магазин";
             this.Store.UseVisualStyleBackColor = true;
             // 
-            // LibraryList
-            // 
-            this.LibraryList.FormattingEnabled = true;
-            this.LibraryList.ItemHeight = 15;
-            this.LibraryList.Location = new System.Drawing.Point(4, 4);
-            this.LibraryList.Name = "LibraryList";
-            this.LibraryList.Size = new System.Drawing.Size(296, 364);
-            this.LibraryList.TabIndex = 0;
-            // 
-            // Download
-            // 
-            this.Download.Enabled = false;
-            this.Download.Location = new System.Drawing.Point(306, 4);
-            this.Download.Name = "Download";
-            this.Download.Size = new System.Drawing.Size(121, 41);
-            this.Download.TabIndex = 1;
-            this.Download.Text = "Загрузить";
-            this.Download.UseVisualStyleBackColor = true;
-            // 
-            // Delete
-            // 
-            this.Delete.Enabled = false;
-            this.Delete.Location = new System.Drawing.Point(306, 98);
-            this.Delete.Name = "Delete";
-            this.Delete.Size = new System.Drawing.Size(121, 41);
-            this.Delete.TabIndex = 2;
-            this.Delete.Text = "Удалить";
-            this.Delete.UseVisualStyleBackColor = true;
-            // 
-            // Check
-            // 
-            this.Check.Enabled = false;
-            this.Check.Location = new System.Drawing.Point(306, 145);
-            this.Check.Name = "Check";
-            this.Check.Size = new System.Drawing.Size(121, 41);
-            this.Check.TabIndex = 3;
-            this.Check.Text = "Проверить файлы";
-            this.Check.UseVisualStyleBackColor = true;
-            // 
-            // Repack
-            // 
-            this.Repack.Enabled = false;
-            this.Repack.Location = new System.Drawing.Point(306, 51);
-            this.Repack.Name = "Repack";
-            this.Repack.Size = new System.Drawing.Size(121, 41);
-            this.Repack.TabIndex = 4;
-            this.Repack.Text = "Переупаковать";
-            this.Repack.UseVisualStyleBackColor = true;
-            // 
-            // Run
-            // 
-            this.Run.Enabled = false;
-            this.Run.Location = new System.Drawing.Point(306, 327);
-            this.Run.Name = "Run";
-            this.Run.Size = new System.Drawing.Size(121, 41);
-            this.Run.TabIndex = 5;
-            this.Run.Text = "Запустить";
-            this.Run.UseVisualStyleBackColor = true;
-            // 
-            // StoreList
-            // 
-            this.StoreList.FormattingEnabled = true;
-            this.StoreList.ItemHeight = 15;
-            this.StoreList.Location = new System.Drawing.Point(3, 3);
-            this.StoreList.Name = "StoreList";
-            this.StoreList.Size = new System.Drawing.Size(296, 364);
-            this.StoreList.TabIndex = 1;
-            // 
             // Add
             // 
             this.Add.Enabled = false;
@@ -235,6 +252,16 @@ namespace DataWallClient
             this.Add.TabIndex = 6;
             this.Add.Text = "Добавить в библиотеку";
             this.Add.UseVisualStyleBackColor = true;
+            // 
+            // StoreList
+            // 
+            this.StoreList.FormattingEnabled = true;
+            this.StoreList.ItemHeight = 15;
+            this.StoreList.Location = new System.Drawing.Point(3, 3);
+            this.StoreList.Name = "StoreList";
+            this.StoreList.Size = new System.Drawing.Size(296, 364);
+            this.StoreList.TabIndex = 1;
+            this.StoreList.Visible = false;
             // 
             // ClientForm
             // 
@@ -252,6 +279,8 @@ namespace DataWallClient
             this.Workspace.ResumeLayout(false);
             this.tabWorkspace.ResumeLayout(false);
             this.MyLibrary.ResumeLayout(false);
+            this.WaitPanel.ResumeLayout(false);
+            this.WaitPanel.PerformLayout();
             this.Store.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -277,6 +306,8 @@ namespace DataWallClient
         private System.Windows.Forms.Button Repack;
         private System.Windows.Forms.Button Add;
         private System.Windows.Forms.ListBox StoreList;
+        private System.Windows.Forms.Panel WaitPanel;
+        private System.Windows.Forms.Label label3;
     }
 }
 

@@ -415,9 +415,9 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 
             for (int i = 0; i < library_size; i++)
                 print_log("Library unit: %d - %s, code %ld",
-                    i + 1,
-                    library->name.c_str(),
-                    library->code);
+                    library[i].id,
+                    library[i].name.c_str(),
+                    library[i].code);
 
             BYTE ok_answ[2] = { 200, 0 };
             std::string str_libsize = std::to_string(library_size);
@@ -426,12 +426,25 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 
             for (int i = 0; i < library_size; i++)
             {
-                std::string unit_code = std::to_string(library->code);
+                std::string unit_code = std::to_string(library[i].id);
                 if (!WriteString((char*)unit_code.c_str())) BREAK_FAILED
-                if (!WriteString((char*)library->name.c_str())) BREAK_FAILED
+                if (!WriteString((char*)library[i].name.c_str())) BREAK_FAILED
             }
 
             continue;
+        }
+        if ((BYTE)str[0] == 110)
+        {
+            print_log("User want to download soft:");
+            char id_software[10], install_path[1024];
+            if (!ReadString(id_software)) BREAK_FAILED
+            if (!ReadString(install_path)) BREAK_FAILED
+
+            print_log("%s at path %s", id_software, install_path);
+            hr = DataWallEngine::InstallSoftware(id_software, install_path, NULL);
+            if (FAILED(hr)) BREAK_FAILED
+            BYTE ok_answ[2] = { 200, 0 };
+            WriteString((char*)ok_answ);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

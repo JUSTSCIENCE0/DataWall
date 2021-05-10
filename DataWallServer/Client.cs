@@ -8,9 +8,20 @@ using System.Security.Authentication;
 using System.Threading;
 using System.Text;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace DataWallServer
 {
+    enum ContentTypes
+    {
+        DLL = 0x4C4C44,
+        IMG = 0x474D49,
+        TXT = 0x545854,
+        SND = 0x444E53,
+        BIN = 0x4E4942
+    }
+
     class Client
     {
         public bool alive;
@@ -244,7 +255,7 @@ namespace DataWallServer
                         int offset = 5;
                         foreach (DBUnit unit in result)
                         {
-                            answ_size += (9 + Encoding.UTF8.GetBytes(unit.name).Length);
+                            answ_size += (17 + Encoding.UTF8.GetBytes(unit.name).Length);
                         }
 
                         byte[] answer = new byte[answ_size];
@@ -255,8 +266,11 @@ namespace DataWallServer
 
                         foreach (DBUnit unit in result)
                         {
-                            byte[] unit_size = BitConverter.GetBytes(unit.product_code);
-                            Array.Copy(unit_size, 0, answer, offset, 8);
+                            byte[] unit_id = BitConverter.GetBytes(unit.id_software);
+                            Array.Copy(unit_id, 0, answer, offset, 8);
+                            offset += 8;
+                            byte[] unit_code = BitConverter.GetBytes(unit.product_code);
+                            Array.Copy(unit_code, 0, answer, offset, 8);
                             offset += 8;
                             byte[] unit_name = Encoding.UTF8.GetBytes(unit.name);
                             Array.Copy(unit_name, 0, answer, offset, unit_name.Length);
@@ -271,6 +285,113 @@ namespace DataWallServer
                     catch (Exception exp)
                     {
                         log.msg("Error at user '" + id + "' " + exp.Message);
+                        alive = false;
+                        SetInactive();
+                        return;
+                    }
+                }
+
+                if (data[0] == 110)
+                {
+                    if (!authenticated)
+                    {
+                        try
+                        {
+                            byte[] err_mes = GenerateMessage(255,
+                                "User don't authenticated");
+                            if (!SendMessage(err_mes))
+                                throw new Exception("Error send message");
+
+                            continue;
+                        }
+                        catch (Exception exp)
+                        {
+                            log.msg("Error at user '" + id + "' " + exp.Message);
+                            alive = false;
+                            SetInactive();
+                            return;
+                        }
+                    }
+
+                    try
+                    {
+                        byte[] id_soft = GetMessage();
+                        string id_software = Encoding.UTF8.GetString(id_soft);
+
+                        DBUnit soft = db.LoadUnitInfo(Convert.ToUInt64(id_software));
+                        log.msg("User '" + id + "' want software " + soft.name);
+
+                        string config = "D:\\DataWall\\" +
+                            id_software + " " + soft.name + "\\files.info";
+                        StreamReader conf_reader = new StreamReader(config);
+                        List<byte[]> config_list = new List<byte[]>();
+                        byte[] b200 = { 200 };
+                        config_list.Add(b200);
+                        List<string> files = new List<string>();
+                        while (!conf_reader.EndOfStream)
+                        {
+                            byte[] btype = { 0 };
+                            byte[] bnull = { 0 };
+                            byte[] bcontent = { 0, 0, 0, 0 };
+
+                            string fname = conf_reader.ReadLine();
+                            string type = conf_reader.ReadLine();
+                            string content_code = "";
+                            if (type == "1")
+                            {
+                                btype[0] = 1;
+                                content_code = conf_reader.ReadLine();
+                                switch (content_code)
+                                {
+                                    case "DLL":
+                                        bcontent = BitConverter.GetBytes((Int32)ContentTypes.DLL);
+                                        break;
+                                    case "IMG":
+                                        bcontent = BitConverter.GetBytes((Int32)ContentTypes.IMG);
+                                        break;
+                                    case "TXT":
+                                        bcontent = BitConverter.GetBytes((Int32)ContentTypes.TXT);
+                                        break;
+                                    case "SND":
+                                        bcontent = BitConverter.GetBytes((Int32)ContentTypes.SND);
+                                        break;
+                                    case "BIN":
+                                        bcontent = BitConverter.GetBytes((Int32)ContentTypes.BIN);
+                                        break;
+                                }
+                            }
+                            config_list.Add(btype);
+                            config_list.Add(bcontent);
+                            config_list.Add(Encoding.UTF8.GetBytes(fname));
+                            config_list.Add(bnull);
+
+                            files.Add("D:\\DataWall\\" +
+                            id_software + " " + soft.name + "\\" + fname);
+                        }
+
+                        byte[] eof = { 255 };
+                        config_list.Add(eof);
+
+                        byte[][] tmp = config_list.ToArray();
+
+                        byte[] answer = tmp.SelectMany(x=>x).ToArray();
+                        SendMessage(answer);
+
+                        foreach (string file in files)
+                        {
+                            BinaryReader file_reader = new BinaryReader(File.OpenRead(file));
+                            FileInfo info = new FileInfo(file);
+                            byte[] file_data = file_reader.ReadBytes((int)info.Length);
+                            SendMessage(file_data);
+                        }
+
+                    }
+                    catch (Exception exp)
+                    {
+                        log.msg("Error at user '" + id + "' " + exp.Message);
+                        byte[] err_mes = GenerateMessage(255,
+                                "Unexpected error");
+                        SendMessage(err_mes);
                         alive = false;
                         SetInactive();
                         return;

@@ -171,7 +171,7 @@ int CALLBACK WinMain(
         return -1;
     }
 
-    FILE* fLogo = fopen("D:\\logo.bmp", "rb");
+    FILE* fLogo = fopen("logo.bmp", "rb");
     if (!fLogo)
     {
         MessageBox(NULL,
@@ -190,7 +190,7 @@ int CALLBACK WinMain(
     fread(bLogo, 1, lSize, fLogo);
     fclose(fLogo);
 
-    FILE* fText = fopen("D:\\text.txt", "rb");
+    FILE* fText = fopen("text.txt", "rb");
     if (!fText)
     {
         MessageBox(NULL,

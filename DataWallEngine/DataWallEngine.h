@@ -42,6 +42,7 @@ namespace DataWallEngine
     } VideoAdapterInfo;
 
     typedef struct {
+        UINT64 id;
         std::string name;
         UINT64 code;
     } LibraryUnit;
@@ -59,6 +60,7 @@ namespace DataWallEngine
     extern "C" DATAWALLENGINE_API HRESULT NetworkRegistration(const char* nickname, const char* password);
     extern "C" DATAWALLENGINE_API HRESULT SendDeviceConfiguration(const char* mb, const char* cpu, const char* gpu);
     extern "C" DATAWALLENGINE_API HRESULT RequestLibrary(LibraryUnit* &library, int &number);
+    extern "C" DATAWALLENGINE_API HRESULT InstallSoftware(const char* id, const char* path, BYTE* key);
 
     extern "C" DATAWALLENGINE_API HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key);
     extern "C" DATAWALLENGINE_API HRESULT DecryptData(BYTE * data, INT32 size, BYTE * key);

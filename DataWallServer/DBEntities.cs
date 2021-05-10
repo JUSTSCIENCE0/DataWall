@@ -543,5 +543,36 @@ namespace DataWallServer
             //    return false;
             //}
         }
+
+        public DBUnit LoadUnitInfo(UInt64 id)
+        {
+            DBUnit result = new DBUnit();
+
+            try
+            {
+                mtx.WaitOne();
+                string sql = "SELECT * FROM software" +
+                " WHERE id_software = " + id;
+
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                result.id_software = Convert.ToUInt64(reader["id_software"]);
+                result.name = reader["name"].ToString();
+                result.product_code = Convert.ToUInt64(reader["code"]);
+                result.active = Convert.ToBoolean(reader["active"]);
+
+                reader.Close();
+                mtx.ReleaseMutex();
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message);
+                mtx.ReleaseMutex();
+                return result;
+            }
+
+            return result;
+        }
     }
 }
