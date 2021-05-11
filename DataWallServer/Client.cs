@@ -66,9 +66,10 @@ namespace DataWallServer
                 id = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString() + ":" +
                     ((IPEndPoint)client.Client.RemoteEndPoint).Port.ToString();
 
+                alive = true;
+
                 clientThread = new Thread(ClientHandler);
                 clientThread.Start();
-                alive = true;
             }
             catch (Exception exp)
             {
