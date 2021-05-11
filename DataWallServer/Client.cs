@@ -116,7 +116,8 @@ namespace DataWallServer
                         authenticated = db.AuthentificateUser(nick, pass_hash);
                         if (authenticated)
                         {
-                            message = GenerateMessage(200, "OK");
+                            DBUser userInfo = db.LoadUserData(id);
+                            message = GenerateMessage(200, userInfo.user_code.ToString());
                             id = nick;
                             db.SetUserActive(id, true);
                             log.msg("User '" + id + "' auth success");

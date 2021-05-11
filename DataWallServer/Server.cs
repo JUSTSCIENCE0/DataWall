@@ -75,9 +75,17 @@ namespace DataWallServer
         {
             while(server_alive)
             {
-                mutex.WaitOne();
-                clients.RemoveAll(client => !client.alive);
-                mutex.ReleaseMutex();
+                try
+                {
+                    mutex.WaitOne();
+                    clients.RemoveAll(client => !client.alive);
+                    mutex.ReleaseMutex();
+                }
+                catch(Exception exp)
+                {
+                    log.msg("Error when remove dead client: " + exp.Message);
+                    mutex.ReleaseMutex();
+                }
 
                 Thread.Sleep(1000);
             }
