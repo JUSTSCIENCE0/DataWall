@@ -253,10 +253,6 @@ namespace DataWallClient
             byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
             InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
 
-            string codes = "";
-            for (int i = 0; i < InstallPath.Length; i++)
-                codes += ((int)InstallPath[i]).ToString() + " ";
-            MessageBox.Show(codes);
             Directory.Delete(InstallPath, true);
             
             soft_key.SetValue("Installed", "false");

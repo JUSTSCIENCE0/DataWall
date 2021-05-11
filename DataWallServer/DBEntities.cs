@@ -144,7 +144,7 @@ namespace DataWallServer
         public DBUser LoadUserData(string login)
         {
             string sql = "SELECT * FROM user WHERE " +
-                "nickname = '" + login + "'";
+                "login = '" + login + "'";
 
             DBUser result = new DBUser(login, "", false, 0);
 

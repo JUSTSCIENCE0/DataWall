@@ -60,6 +60,7 @@ namespace DataWallEngine
     extern "C" DATAWALLENGINE_API HRESULT NetworkRegistration(const char* nickname, const char* password);
     extern "C" DATAWALLENGINE_API HRESULT SendDeviceConfiguration(const char* mb, const char* cpu, const char* gpu);
     extern "C" DATAWALLENGINE_API HRESULT RequestLibrary(LibraryUnit* &library, int &number);
+    extern "C" DATAWALLENGINE_API HRESULT GenerateKey(const char* sys_info, UINT64 lib_code, BYTE* key);
     extern "C" DATAWALLENGINE_API HRESULT InstallSoftware(const char* id, const char* path, BYTE* key);
 
     extern "C" DATAWALLENGINE_API HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key);

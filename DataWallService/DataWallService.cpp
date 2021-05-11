@@ -63,6 +63,10 @@ UINT8 MBs, CPUs, GPUs;
 DataWallEngine::MotherboardInfo* mInfo;
 DataWallEngine::ProcessorInfo* pInfo;
 DataWallEngine::VideoAdapterInfo* vInfo;
+
+DataWallEngine::LibraryUnit* library = NULL;
+int library_size = 0;
+
 char Motherboard[1024] = "";
 char CPU[1024] = "";
 char GPU[1024] = "";
@@ -408,8 +412,6 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
         if ((BYTE)str[0] == 100)
         {
             print_log("Request library");
-            DataWallEngine::LibraryUnit* library = NULL;
-            int library_size;
             hr = DataWallEngine::RequestLibrary(library, library_size);
             if (FAILED(hr)) BREAK_FAILED
 
@@ -439,6 +441,23 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
             char id_software[10], install_path[1024];
             if (!ReadString(id_software)) BREAK_FAILED
             if (!ReadString(install_path)) BREAK_FAILED
+
+            UINT64 lib_code = 0;
+            UINT64 id = atoll(id_software);
+            for (int i = 0; i < library_size; i++)
+            {
+                if (library[i].id == id)
+                {
+                    lib_code = library[i].code;
+                    break;
+                }
+            }
+            if (!lib_code) BREAK_FAILED
+
+            BYTE current_key[16];
+            char sys_info[3072] = "";
+            snprintf(sys_info, 3072, "%s %s %s", CPU, Motherboard, GPU);
+            hr = DataWallEngine::GenerateKey(sys_info, lib_code, current_key);
 
             print_log("%s at path %s", id_software, install_path);
             hr = DataWallEngine::InstallSoftware(id_software, install_path, NULL);

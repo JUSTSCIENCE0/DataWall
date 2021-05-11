@@ -139,9 +139,9 @@ char* convert_w(BSTR data)
 
 struct soft_file
 {
-    bool need_pack;
-    int pack_type;
-    std::string fname;
+    bool need_pack = false;
+    int pack_type = 0;
+    std::string fname = "";
     BYTE* data = NULL;
 };
 
@@ -169,6 +169,7 @@ namespace DataWallEngine
 
     SOCKET hsock = 0;
     SSL* ssl;
+    UINT64 user_code = 0;
 
     int SendPacket(BYTE* buf, int size)
     {
@@ -229,7 +230,7 @@ namespace DataWallEngine
                 if (err == SSL_ERROR_ZERO_RETURN || err == SSL_ERROR_SYSCALL || err == SSL_ERROR_SSL)
                     return -1;
             }
-            recv_size += res;
+            recv_size += (int)res;
             pntr += res;
         }
 
@@ -815,7 +816,8 @@ namespace DataWallEngine
 
         if (answer[0] == 200)
         {
-            print_log("Authentication successfull with message: %s", answer + 2);
+            user_code = atoll((const char*)(answer + 2));
+            print_log("Authentication successfull with message: %llu", user_code);
             Authenticated = true;
         }
         else
@@ -939,6 +941,37 @@ namespace DataWallEngine
         return S_OK;
     }
 
+    HRESULT GenerateKey(const char* sys_info, UINT64 lib_code, BYTE* key)
+    {
+        if (!sys_info || !key)
+            return E_POINTER;
+
+        print_log("Start generate key");
+
+        BYTE buffer[4096];
+        snprintf((char*)buffer, 2048, "%s %llu %llu", sys_info, user_code, lib_code);
+
+        print_log("info string: %s", buffer);
+
+        BYTE hash[32];
+        HRESULT hr = CalculateHash(buffer, strlen((const char*)buffer), hash);
+        if (!SUCCEEDED(hr))
+        {
+            print_log("Error when calculate hash");
+            return hr;
+        }
+
+        for (int i = 0; i < 16; i++)
+        {
+            print_log("%d", hash[i]);
+        }
+
+        memcpy(key, hash, 16);
+
+        print_log("Success");
+        return S_OK;
+    }
+
     HRESULT InstallSoftware(const char* id, const char* path, BYTE* key)
     {
         if (!Initialized)
@@ -951,7 +984,7 @@ namespace DataWallEngine
             print_log("Failed to send requst");
             return E_FAIL;
         }
-        if (SendPacket((BYTE*)id, strlen(id)) != strlen(id))
+        if (SendPacket((BYTE*)id, (int)strlen(id)) != strlen(id))
         {
             print_log("Failed to send id software");
             return E_FAIL;
