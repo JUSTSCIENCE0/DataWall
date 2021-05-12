@@ -458,10 +458,83 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
             char sys_info[3072] = "";
             snprintf(sys_info, 3072, "%s %s %s", CPU, Motherboard, GPU);
             hr = DataWallEngine::GenerateKey(sys_info, lib_code, current_key);
+            if (FAILED(hr)) BREAK_FAILED
 
             print_log("%s at path %s", id_software, install_path);
-            hr = DataWallEngine::InstallSoftware(id_software, install_path, NULL);
+            hr = DataWallEngine::InstallSoftware(id_software, install_path, current_key);
             if (FAILED(hr)) BREAK_FAILED
+            BYTE ok_answ[2] = { 200, 0 };
+            WriteString((char*)ok_answ);
+        }
+
+        if ((BYTE)str[0] == 150)
+        {
+            print_log("User want to start soft:");
+            char id_software[10];
+            if (!ReadString(id_software)) BREAK_FAILED
+
+            print_log("code %s", id_software);
+            UINT64 lib_code = 0;
+            std::string lib_name = "";
+            UINT64 id = atoll(id_software);
+            for (int i = 0; i < library_size; i++)
+            {
+                if (library[i].id == id)
+                {
+                    lib_code = library[i].code;
+                    lib_name = library[i].name;
+                    break;
+                }
+            }
+            if (!lib_code) BREAK_FAILED
+
+            BYTE current_key[16];
+            char sys_info[3072] = "";
+            snprintf(sys_info, 3072, "%s %s %s", CPU, Motherboard, GPU);
+            hr = DataWallEngine::GenerateKey(sys_info, lib_code, current_key);
+            if (FAILED(hr)) BREAK_FAILED
+
+            char pipename[1500];
+            snprintf(pipename, 1500, "\\\\.\\pipe\\%s", lib_name.c_str());
+
+            HANDLE hSoftPipe = CreateNamedPipe(pipename,
+                PIPE_ACCESS_DUPLEX,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                1,
+                1024 * 16,
+                1024 * 16,
+                NMPWAIT_USE_DEFAULT_WAIT,
+                NULL);
+            if (hSoftPipe == INVALID_HANDLE_VALUE)
+            {
+                print_log("Failed to create named pipe");
+                BREAK_FAILED
+            }
+            print_log("Pipe created");
+
+            if (!ConnectNamedPipe(hSoftPipe, NULL))
+            {
+                print_log("Failed to connect client to named pipe");
+                BREAK_FAILED
+            }
+            print_log("Client connected to named pipe");
+
+            ULONG writen;
+            if (!WriteFile(hSoftPipe, current_key, 16, &writen, NULL))
+            {
+                print_log("Error when write key");
+                BREAK_FAILED
+            }
+
+            char buff[2];
+            ULONG readen;
+            if (!ReadFile(hSoftPipe, buff, 2, &readen, NULL))
+            {
+                print_log("Error when read answer");
+                BREAK_FAILED
+            }
+            CloseHandle(hSoftPipe);
+
             BYTE ok_answ[2] = { 200, 0 };
             WriteString((char*)ok_answ);
         }

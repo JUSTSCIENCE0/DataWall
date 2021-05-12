@@ -178,6 +178,7 @@ namespace DataWallClient
             this.Run.TabIndex = 5;
             this.Run.Text = "Запустить";
             this.Run.UseVisualStyleBackColor = true;
+            this.Run.Click += new System.EventHandler(this.Run_Click);
             // 
             // Repack
             // 

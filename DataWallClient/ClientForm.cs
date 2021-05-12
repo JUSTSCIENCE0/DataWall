@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.IO.Pipes;
 using System.IO;
 using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace DataWallClient
 {
@@ -263,6 +264,35 @@ namespace DataWallClient
             Repack.Enabled = false;
             Check.Enabled = false;
             Run.Enabled = false;
+        }
+
+        private void Run_Click(object sender, EventArgs e)
+        {
+            Unit selectedUnit = (Unit)LibraryList.SelectedItem;
+            RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+            string InstallPath = soft_key.GetValue("InstallPath").ToString();
+            byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
+            InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
+
+            List<string> files = new List<string>(Directory.GetFiles(InstallPath));
+            string binPath = files.Find(file => file.Contains(".exe"));
+
+            SendCode(150);
+            SendMessage(currentUnit.code.ToString());
+
+            Process soft = new Process();
+            ProcessStartInfo info = new ProcessStartInfo(binPath, InstallPath);
+            soft.StartInfo = info;
+            soft.Start();
+
+            Workspace.Visible = false;
+            WaitPanel.Visible = true;
+
+            byte result = RecvCode();
+
+            Workspace.Visible = true;
+            WaitPanel.Visible = false;
         }
     }
 }

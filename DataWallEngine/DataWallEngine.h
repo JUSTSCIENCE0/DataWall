@@ -2,15 +2,20 @@
 #include <windows.h>
 #include <string>
 
-#define DATA_WALL_CODE 0x4C575444 // DTWL
-#define CONTENT_DLL    0x4C4C44   // DLL
-#define CONTENT_IMAGE  0x474D49   // IMG
-#define CONTENT_TEXT   0x545854   // TXT
-#define CONTENT_SOUND  0x444E53   // SND
-#define CONTENT_BIN    0x4E4942   // BIN
+#ifndef DATA_WALL_CONTENT
+#define  DATA_WALL_CONTENT
+#define  DATA_WALL_CODE 0x4C575444 // DTWL
+#define  CONTENT_DLL    0x4C4C44   // DLL
+#define  CONTENT_IMAGE  0x474D49   // IMG
+#define  CONTENT_TEXT   0x545854   // TXT
+#define  CONTENT_SOUND  0x444E53   // SND
+#define  CONTENT_BIN    0x4E4942   // BIN
 
-#define WRONG_DATA     0xFD000001
-#define WRONG_CONTENT  0xFD000002
+#define  WRONG_DATA     0xFD000001
+#define  WRONG_CONTENT  0xFD000002
+
+typedef UINT32 ContentType;
+#endif // !DATA_WALL_CONTENT
 
 #ifdef DATAWALLENGINE_EXPORTS
 #define DATAWALLENGINE_API __declspec(dllexport)
@@ -46,8 +51,6 @@ namespace DataWallEngine
         std::string name;
         UINT64 code;
     } LibraryUnit;
-
-    typedef UINT32 ContentType;
 
     extern "C" DATAWALLENGINE_API HRESULT InitializeEngine(const char* logfile, bool log_to_stdout, const char* server_addr, UINT16 port);
     extern "C" DATAWALLENGINE_API HRESULT UninitializeEngine();

@@ -1049,14 +1049,31 @@ namespace DataWallEngine
             RecvPacket(file_data, file_size);
             print_log("size %d", file_size);
             std::string file_path = std::string(path) + "\\" + var.fname;
-            
-            FILE* f = fopen(file_path.c_str(), "wb");
-            
+
+            if (var.need_pack)
+            {
+                size_t pos_point = file_path.find_last_of('.');
+                file_path = file_path.substr(0, pos_point);
+                file_path += ".pak";
+                print_log("Encrypt and save to %s", file_path.c_str());
+
+                HRESULT hr = PackInContainer(file_data, file_size, var.pack_type, key, file_path.c_str());
+                if (FAILED(hr))
+                {
+                    print_log("Failed path in container");
+                    return hr;
+                }
+            }
+            else
+            {
+                FILE* f = fopen(file_path.c_str(), "wb");
+                fwrite(file_data, 1, file_size, f);
+                fflush(f);
+                fclose(f);
+            }
+
             //TODO: pack there
-            
-            fwrite(file_data, 1, file_size, f);
-            fflush(f);
-            fclose(f);
+            /**/
 
             delete[] file_data;
         }

@@ -4,14 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
-
 #include <stdio.h>
+#include <string>
 
-// Global variables
-
-//HINSTANCE hInst;
-//static TCHAR szWindowClass[] = _T("DesktopApp");
-//static TCHAR szTitle[] = _T("TestSoft");
+#include "DataWallLoader.h"
 
 void print(BYTE* data, int size)
 {
@@ -19,43 +15,6 @@ void print(BYTE* data, int size)
         printf("%02X ", data[i]);
     printf("\n");
 }
-
-/*LRESULT CALLBACK WndProc(
-    _In_ HWND   hWnd,
-    _In_ UINT   message,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam
-)
-{
-    PAINTSTRUCT ps;
-    HDC hdc;
-    TCHAR greeting[] = _T("Hello, Windows desktop!");
-
-    switch (message)
-    {
-    case WM_PAINT:
-        hdc = BeginPaint(hWnd, &ps);
-
-        // Here your application is laid out.
-        // For this introduction, we just print out "Hello, Windows desktop!"
-        // in the top left corner.
-        TextOut(hdc,
-            5, 5,
-            greeting, _tcslen(greeting));
-        // End application-specific layout section.
-
-        EndPaint(hWnd, &ps);
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-        break;
-    }
-
-    return 0;
-}*/
 
 typedef void (CALLBACK* LOADLOGODATA)(BYTE*, TCHAR*);
 typedef int (CALLBACK* INITWIND)(HINSTANCE, HINSTANCE, LPSTR, int);
@@ -66,90 +25,27 @@ int CALLBACK WinMain(
     _In_ LPSTR     lpCmdLine,
     _In_ int       nCmdShow)
 {
-    /*HMEMORYMODULE myLib = NULL;
-    BYTE* key = new BYTE[16];
-    for (int i = 0; i < 16; i++)
-    {
-        key[i] = (BYTE)i;
-    }
+    /*BYTE key[16] = { 
+        12, 159, 215, 177, 
+        120, 46, 30, 5,
+        88, 13, 240, 142,
+        32, 69, 124, 216
+    };*/
+    BYTE* key = DataWallLoader::LoadKey();
 
-    myLib = DataWallLoader::LoadEncryptedLibrary("D:\\DataWall\\library.pak", key);
-    addNumbers = (TestFunc)DataWallLoader::LoadEncryptedFunction(myLib, "addNumbers");
-    int res = addNumbers(2, 3);
-    printf("%d\n", res);
-    DataWallLoader::FreeEncryptedLibrary(myLib);
-    DataWallEngine::PackInContainer(data, (INT32)SIZE, CONTENT_DLL, key, "D:\\DataWall\\library.pak");
-    int size;
-    DataWallEngine::ContentType type;
-    DataWallEngine::ReadFromContainer("D:\\DataWall\\container.pak", key, data, size, type);
-    print(data, size);
-    printf("\n");*/
-    /*
-    WNDCLASSEX wcex;
+    MessageBox(NULL,
+        _T(lpCmdLine),
+        _T("Info"),
+        NULL);
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = WndProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = szWindowClass;
-    wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-
-    if (!RegisterClassEx(&wcex))
-    {
-        MessageBox(NULL,
-            _T("Call to RegisterClassEx failed!"),
-            _T("Windows Desktop Guided Tour"),
-            NULL);
-
-        return 1;
-    }
-
-    HWND hWnd = CreateWindow(
-        szWindowClass,
-        szTitle,
-        WS_OVERLAPPEDWINDOW,
-        500, 200,
-        500, 500,
-        NULL,
-        NULL,
-        hInstance,
-        NULL
-    );
-    if (!hWnd)
-    {
-        MessageBox(NULL,
-            _T("Call to CreateWindow failed!"),
-            _T("Windows Desktop Guided Tour"),
-            NULL);
-
-        return 1;
-    }
-
-    ShowWindow(hWnd,
-        nCmdShow);
-    UpdateWindow(hWnd);
-
-    // Main message loop:
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-    */
-
-    HINSTANCE hDLL;
+    HMEMORYMODULE hDLL;
     INITWIND  InitializeWindow;
     LOADLOGODATA LoadLogoData;
     HRESULT hr;
 
-    hDLL = LoadLibrary("TestDLL.dll");
+    char path[1024];
+    snprintf(path, 1024, "%s\\TestDLL.pak", lpCmdLine);
+    hDLL = DataWallLoader::LoadEncryptedLibrary(path, key);
 
     if (!hDLL)
     {
@@ -160,59 +56,63 @@ int CALLBACK WinMain(
         return -1;
     }
 
-    LoadLogoData = (LOADLOGODATA)GetProcAddress(hDLL, "LoadLogoData");
+    LoadLogoData = (LOADLOGODATA)DataWallLoader::LoadEncryptedFunction(hDLL, "LoadLogoData");
     if (!LoadLogoData)
     {
         MessageBox(NULL,
             _T("Error when load function"),
             _T("Error"),
             NULL);
-        FreeLibrary(hDLL);
+        DataWallLoader::FreeEncryptedLibrary(hDLL);
         return -1;
     }
 
-    FILE* fLogo = fopen("logo.bmp", "rb");
-    if (!fLogo)
+    BYTE* bLogo = NULL;
+    int bLogoSize = 0;
+    ContentType logoType = 0;
+
+    snprintf(path, 1024, "%s\\logo.pak", lpCmdLine);
+    hr = DataWallLoader::ReadFromContainer(
+        path,
+        key,
+        bLogo,
+        bLogoSize,
+        logoType);
+    if (FAILED(hr) || logoType != CONTENT_IMAGE)
     {
         MessageBox(NULL,
             _T("Error when load logo"),
             _T("Error"),
             NULL);
-        FreeLibrary(hDLL);
+        DataWallLoader::FreeEncryptedLibrary(hDLL);
         return -1;
     }
 
-    fseek(fLogo, 0, SEEK_END);
-    size_t lSize = ftell(fLogo);
-    rewind(fLogo);
+    BYTE* bText = NULL;
+    int bTextSize = 0;
+    ContentType textType = 0;
 
-    BYTE* bLogo = new BYTE[lSize];
-    fread(bLogo, 1, lSize, fLogo);
-    fclose(fLogo);
-
-    FILE* fText = fopen("text.txt", "rb");
-    if (!fText)
+    snprintf(path, 1024, "%s\\text.pak", lpCmdLine);
+    hr = DataWallLoader::ReadFromContainer(
+        path,
+        key,
+        bText,
+        bTextSize,
+        textType);
+    if (FAILED(hr) || textType != CONTENT_TEXT)
     {
         MessageBox(NULL,
             _T("Error when load text"),
             _T("Error"),
             NULL);
         delete[] bLogo;
-        FreeLibrary(hDLL);
+        DataWallLoader::FreeEncryptedLibrary(hDLL);
         return -1;
     }
 
-    fseek(fText, 0, SEEK_END);
-    lSize = (ftell(fText) / sizeof(TCHAR));
-    rewind(fText);
+    LoadLogoData(bLogo, (TCHAR*)bText);
 
-    TCHAR* bText = new TCHAR[lSize];
-    fread(bText, sizeof(TCHAR), lSize, fText);
-    fclose(fText);
-
-    LoadLogoData(bLogo, bText);
-
-    InitializeWindow = (INITWIND)GetProcAddress(hDLL, "InitializeWindow");
+    InitializeWindow = (INITWIND)DataWallLoader::LoadEncryptedFunction(hDLL, "InitializeWindow");
     if (!InitializeWindow)
     {
         MessageBox(NULL,
@@ -220,7 +120,8 @@ int CALLBACK WinMain(
             _T("Error"),
             NULL);
         delete[] bLogo;
-        FreeLibrary(hDLL);
+        delete[] bText;
+        DataWallLoader::FreeEncryptedLibrary(hDLL);
         return -1;
     }
 
@@ -235,12 +136,14 @@ int CALLBACK WinMain(
             _T("Error"),
             NULL);
         delete[] bLogo;
-        FreeLibrary(hDLL);
+        delete[] bText;
+        DataWallLoader::FreeEncryptedLibrary(hDLL);
         return -1;
     }
 
-    FreeLibrary(hDLL);
+    DataWallLoader::FreeEncryptedLibrary(hDLL);
     delete[] bLogo;
+    delete[] bText;
     printf("Success!\n");
     return 0;// (int)msg.wParam;
 }

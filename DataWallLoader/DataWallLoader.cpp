@@ -88,6 +88,17 @@ void aes128_dec(__m128i* key_schedule, uint8_t* cipherText, uint8_t* plainText)
     _mm_storeu_si128((__m128i*) plainText, m);
 }
 
+BYTE char2byte(char input)
+{
+    if (input >= '0' && input <= '9')
+        return input - '0';
+    if (input >= 'A' && input <= 'F')
+        return input - 'A' + 10;
+    if (input >= 'a' && input <= 'f')
+        return input - 'a' + 10;
+    return -1;
+}
+
 namespace DataWallLoader
 {
     HRESULT EncryptData(BYTE* data, INT32 size, BYTE* key)
@@ -207,5 +218,116 @@ namespace DataWallLoader
     FARPROC LoadEncryptedFunction(HMEMORYMODULE handle, const char* name)
     {
         return MemoryGetProcAddress(handle, name);
+    }
+
+    BYTE* LoadKey()
+    {
+        BYTE* key = new BYTE[16];
+        Sleep(1000);
+        HANDLE DataWallHandle = CreateFile(
+            "\\\\.\\pipe\\TestSoft",
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            0,
+            NULL);
+
+        ULONG readed = 0;
+        if (!ReadFile(DataWallHandle, key, 16, &readed, NULL))
+            return NULL;
+
+        if (readed != 16)
+            return NULL;
+
+        char answ[2] = { 200, 0 };
+        if (!WriteFile(DataWallHandle, answ, 1, NULL, NULL))
+            return NULL;
+
+        CloseHandle(DataWallHandle);
+
+        return key;
+    }
+
+    HRESULT ReadFromContainer(const char* container_name, BYTE* key, BYTE*& data, INT32& size, ContentType& type)
+    {
+        FILE* f = fopen(container_name, "rb");
+        if (!f)
+        {
+            return E_FAIL;
+        }
+
+        BYTE* header = new BYTE[16];
+        if (16 != fread(header, 1, 16, f))
+        {
+            delete[] header;
+            return E_FAIL;
+        }
+
+        HRESULT hr = DecryptData(header, 16, key);
+        if (!SUCCEEDED(hr))
+        {
+            delete[] header;
+            return hr;
+        }
+
+        UINT32* NumberPNTR = (UINT32*)header;
+        UINT32 DataWallCode = *NumberPNTR;
+
+        if (DataWallCode != DATA_WALL_CODE)
+        {
+            delete[] header;
+            return WRONG_DATA;
+        }
+        NumberPNTR++;
+
+        UINT32 TypeOfContent = *NumberPNTR;
+        switch (TypeOfContent)
+        {
+        case CONTENT_DLL:
+            type = CONTENT_DLL;
+            break;
+        case CONTENT_IMAGE:
+            type = CONTENT_IMAGE;
+            break;
+        case CONTENT_SOUND:
+            type = CONTENT_SOUND;
+            break;
+        case CONTENT_TEXT:
+            type = CONTENT_TEXT;
+            break;
+        case CONTENT_BIN:
+            type = CONTENT_BIN;
+            break;
+        default:
+            delete[] header;
+            delete NumberPNTR;
+            return WRONG_CONTENT;
+        }
+        NumberPNTR++;
+
+        int encrSize = (*NumberPNTR) - 16;
+        NumberPNTR++;
+        size = *NumberPNTR;
+
+        BYTE* enc_data = new BYTE[encrSize];
+        if (encrSize != fread(enc_data, 1, encrSize, f))
+        {
+            delete[] header;
+            delete[] enc_data;
+            return E_FAIL;
+        }
+        hr = DecryptData(enc_data, encrSize, key);
+        if (!SUCCEEDED(hr))
+        {
+            delete[] header;
+            delete[] enc_data;
+            return hr;
+        }
+
+        data = enc_data;
+
+        delete[] header;
+        return S_OK;
     }
 }
