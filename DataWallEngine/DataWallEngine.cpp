@@ -977,6 +977,9 @@ namespace DataWallEngine
         if (!Initialized)
             return E_FAIL;
 
+        if (!id || !path || !key)
+            return E_INVALIDARG;
+
         print_log("Start install software");
         BYTE req_code[1] = { 110 };
         if (SendPacket(req_code, 1) != 1)
@@ -1071,14 +1074,32 @@ namespace DataWallEngine
                 fflush(f);
                 fclose(f);
             }
-
-            //TODO: pack there
-            /**/
-
             delete[] file_data;
         }
 
         delete[] answer;
+
+        BYTE soft_hash[32] = "";
+        HRESULT hr = CalculateSoftHASH(path, soft_hash);
+        if (FAILED(hr))
+        {
+            print_log("Error when calc hash");
+            return E_FAIL;
+        }
+
+        char hash_text[65] = "";
+        pntr = (BYTE*)hash_text;
+        for (int i = 0; i < 32; i++, pntr += 2)
+        {
+            snprintf((char*)pntr, 3, "%02X", soft_hash[i]);
+        }
+        print_log("Soft hash: %s", hash_text);
+        if (SendPacket((BYTE*)hash_text, strlen(hash_text)) != strlen(hash_text))
+        {
+            print_log("Failed to send hash");
+            return E_FAIL;
+        }
+
         return S_OK;
     }
 

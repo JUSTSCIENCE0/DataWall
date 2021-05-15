@@ -5,7 +5,5 @@ set(SOURCES TestDataWall.cpp)
 cmake_policy(SET CMP0079 NEW)
 add_executable(TestSoft WIN32 ${SOURCES})
 
-include_directories("${CMAKE_SOURCE_DIR}\\DataWallEngine")
 include_directories("${CMAKE_SOURCE_DIR}\\DataWallLoader")
-target_link_libraries(TestSoft LINK_PUBLIC DataWallEngine)
 target_link_libraries(TestSoft LINK_PUBLIC DataWallLoader)

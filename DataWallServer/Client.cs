@@ -387,6 +387,9 @@ namespace DataWallServer
                             SendMessage(file_data);
                         }
 
+                        byte[] row_hash = GetMessage();
+                        string soft_hash = Encoding.UTF8.GetString(row_hash);
+                        log.msg("Soft hash: " + soft_hash);
                     }
                     catch (Exception exp)
                     {
