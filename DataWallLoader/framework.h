@@ -8,5 +8,13 @@
 #include <wmmintrin.h> 
 #include <stdio.h>
 #include <stdint.h>
+#include <string>
+#include <ctime>
 
 #include <wmmintrin.h> 
+
+#include <openssl/applink.c>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/dh.h>
+#include <openssl/engine.h>

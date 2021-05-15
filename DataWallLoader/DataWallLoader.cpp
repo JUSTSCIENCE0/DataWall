@@ -88,15 +88,292 @@ void aes128_dec(__m128i* key_schedule, uint8_t* cipherText, uint8_t* plainText)
     _mm_storeu_si128((__m128i*) plainText, m);
 }
 
-BYTE char2byte(char input)
+FILE* f_logs = NULL;
+void print_log(const char* _Format, ...)
 {
-    if (input >= '0' && input <= '9')
-        return input - '0';
-    if (input >= 'A' && input <= 'F')
-        return input - 'A' + 10;
-    if (input >= 'a' && input <= 'f')
-        return input - 'a' + 10;
-    return -1;
+    if (!f_logs)
+        return;
+
+    std::time_t t = std::time(0);
+    std::tm* now = std::localtime(&t);
+
+    va_list args;
+    va_start(args, _Format);
+    char buffer[1024];
+    memset(buffer, ' ', 20);
+    sprintf(buffer, "%02d.%02d.%04d %02d:%02d:%02d  ",
+        now->tm_mday,
+        now->tm_mon + 1,
+        now->tm_year + 1900,
+        now->tm_hour,
+        now->tm_min,
+        now->tm_sec
+    );
+    vsprintf(buffer + 20, _Format, args);
+    size_t size = std::strlen(buffer);
+    if (size < 1023)
+    {
+        buffer[size] = '\n';
+        size++;
+        buffer[size] = 0;
+    }
+    va_end(args);
+
+    fprintf(f_logs, buffer);
+    fflush(f_logs);
+}
+
+BOOL  SendString(HANDLE pipe, char* str)
+{
+    if (pipe == INVALID_HANDLE_VALUE)
+        return false;
+    if (!str) return false;
+
+    BYTE EOS[1] = { 0 };
+
+    ULONG writen;
+    if (!WriteFile(pipe, str, strlen(str), &writen, NULL))
+    {
+        print_log("writen != strlen(str)");
+        return false;
+    }
+    if (writen != strlen(str))
+    {
+        print_log("writen != strlen(str)");
+        return false;
+    }
+    WriteFile(pipe, EOS, 1, &writen, NULL);
+    if (writen != 1)
+    { 
+        print_log("writen != 1");
+        return false;
+    }
+
+    return true;
+}
+char* RecvString(HANDLE pipe)
+{
+    char* str = new char[1024];
+    char* pntr = str - 1;
+    ULONG readed = 0;
+
+    memset(str, 0, 1024);
+
+    do
+    {
+        pntr++;
+        if (!ReadFile(pipe, pntr, 1, &readed, NULL))
+        {
+            delete[] str;
+            return NULL;
+        }
+        /*if (readed != 2)
+        {
+            MessageBox(NULL,
+                std::to_string(readed).c_str(),
+                "readed != 2",
+                NULL);
+            delete[] str;
+            return NULL;
+        }*/
+    } while (*pntr != 0);
+    return str;
+}
+
+DH*     private_key = NULL;
+BIGNUM* public_key = NULL;
+BYTE*   master_key = NULL;
+int     master_size = 0;
+BOOL generateDH(
+    const char* p_char,
+    const char* q_char,
+    const char* g_char)
+{
+    int codes;
+
+    if (NULL == (private_key = DH_new()))
+        return false;
+
+    if (p_char == NULL ||
+        g_char == NULL)
+    {
+        if (1 != DH_generate_parameters_ex
+        (private_key, 2048, DH_GENERATOR_2, NULL))
+            return false;
+    }
+    else
+    {
+        BIGNUM* p = NULL;
+        BIGNUM* q = NULL;
+        BIGNUM* g = NULL;
+
+        BN_hex2bn(&p, p_char);
+        if (q_char)
+            BN_hex2bn(&q, q_char);
+        BN_hex2bn(&g, g_char);
+
+        if (!p || !g || !q)
+            return false;
+
+        if (1 != DH_set0_pqg(private_key, p, q, g))
+            return false;
+    }
+    
+
+    if (1 != DH_check(private_key, &codes))
+        return false;
+    if (codes != 0)
+    {
+        abort();
+        return false;
+    }
+    if (1 != DH_generate_key(private_key))
+        return false;
+
+    return true;
+}
+BOOL sendDHKey(HANDLE pipe, BOOL key_only)
+{
+    print_log("start send dh key");
+    BIGNUM* pub = (BIGNUM*)DH_get0_pub_key(private_key);
+    if (!pub) return false;
+    char* pk_char = BN_bn2hex(pub);
+
+    print_log("public key = %s", pk_char);
+
+    if (!SendString(pipe, pk_char))
+    {
+        return false;
+    }
+
+    print_log("delete[] pk_char;");
+    print_log("success");
+    if (key_only)
+        return true;
+
+    print_log("start send dh p, g, q");
+    BIGNUM* p = (BIGNUM*)DH_get0_p(private_key);
+    BIGNUM* g = (BIGNUM*)DH_get0_g(private_key);
+    BIGNUM* q = (BIGNUM*)DH_get0_q(private_key);
+
+    print_log("readed dh p, g, q");
+    if (!p || !g) return false;
+    print_log("p and g");
+    char* p_char = BN_bn2hex(p);
+    char* g_char = BN_bn2hex(g);
+    char* q_char = "NULL";
+    if (q) q_char = BN_bn2hex(q);
+
+    print_log("p = %s", p_char);
+    print_log("g = %s", g_char);
+    print_log("q = %s", q_char);
+
+    if (!SendString(pipe, p_char))
+    {
+        return false;
+    }
+    if (!SendString(pipe, g_char))
+    {
+        return false;
+    }
+    if (!SendString(pipe, q_char))
+    {
+        return false;
+    }
+    
+    return true;
+}
+BOOL recvDHKey(HANDLE pipe, BOOL key_only)
+{
+    print_log("start recv_public key");
+    char* pub = RecvString(pipe);
+    if (!pub) return false;
+
+    print_log("recv_public key %s", pub);
+    BN_hex2bn(&public_key, pub);
+    if (!public_key)
+    {
+        delete[] pub;
+        return false;
+    }
+
+    delete[] pub;
+    if (key_only) return true;
+
+    char* p_char = RecvString(pipe);
+    if (!p_char) return false;
+
+    char* g_char = RecvString(pipe);
+    if (!g_char)
+    {
+        delete[] p_char;
+        return false;
+    }
+
+    char* q_char = RecvString(pipe);
+    if (!q_char)
+    {
+        delete[] p_char;
+        delete[] g_char;
+        return false;
+    }
+
+    BIGNUM *p = NULL,
+           *g = NULL,
+           *q = NULL;
+    BN_hex2bn(&p, p_char);
+    BN_hex2bn(&g, g_char);
+    if (!strcmp(q_char, "NULL"))
+        BN_hex2bn(&q, q_char);
+
+    delete[] p_char;
+    delete[] g_char;
+    delete[] q_char;
+    if (!p || !g) return false;
+
+    if (private_key)
+        DH_free(private_key);
+    private_key = NULL;
+    if (NULL == (private_key = DH_new())) return false;
+    if (1 != DH_set0_pqg(private_key, p, q, g)) return false;
+    if (1 != DH_generate_key(private_key)) return false;
+
+    return true;
+}
+BOOL calcSecret()
+{
+    if (!private_key) return false;
+
+    master_size = DH_size(private_key);
+    if (!master_size)
+    {
+        print_log("Couldn't get master size");
+        return false;
+    }
+    print_log("Master size %d", master_size);
+    master_key = new BYTE[master_size];
+
+    if (0 > (master_size = DH_compute_key(master_key, public_key, private_key)))
+    {
+        print_log("Couldn't compute master key");
+        return false;
+    }
+
+    for (int i = 0; i < master_size; i++)
+    {
+        print_log("%d", master_key[i]);
+    }
+
+    return true;
+}
+void XORwithMK(BYTE* data, int len)
+{
+    if (!master_key) return;
+
+    for (int i = 0; i < len; i++)
+    {
+        data[i] = data[i] ^ master_key[i];
+    }
 }
 
 namespace DataWallLoader
@@ -220,6 +497,77 @@ namespace DataWallLoader
         return MemoryGetProcAddress(handle, name);
     }
 
+    HRESULT SendKey(const char* soft_name, BYTE* key)
+    {
+        char pipename[1500];
+        snprintf(pipename, 1500, "\\\\.\\pipe\\%s", soft_name);
+
+        HANDLE hSoftPipe = CreateNamedPipe(pipename,
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+            1,
+            1024 * 16,
+            1024 * 16,
+            NMPWAIT_USE_DEFAULT_WAIT,
+            NULL);
+        if (hSoftPipe == INVALID_HANDLE_VALUE) return E_FAIL;
+
+        if (!ConnectNamedPipe(hSoftPipe, NULL))
+        {
+            CloseHandle(hSoftPipe);
+            return E_FAIL;
+        }
+
+        if (!sendDHKey(hSoftPipe, false))
+        {
+            CloseHandle(hSoftPipe);
+            return E_FAIL;
+        }
+
+        if (!recvDHKey(hSoftPipe, true))
+        {
+            CloseHandle(hSoftPipe);
+            return E_FAIL;
+        }
+
+        if (!calcSecret())
+        {
+            CloseHandle(hSoftPipe);
+            return E_FAIL;
+        }
+
+        XORwithMK(key, 16);
+
+        ULONG writen;
+        if (!WriteFile(hSoftPipe, key, 16, &writen, NULL))
+        {
+            CloseHandle(hSoftPipe);
+            return E_FAIL;
+        }
+
+        char buff[2];
+        ULONG readen;
+        if (!ReadFile(hSoftPipe, buff, 2, &readen, NULL))
+        {
+            CloseHandle(hSoftPipe);
+            return E_FAIL;
+        }
+
+        CloseHandle(hSoftPipe);
+        return S_OK;
+    }
+
+    HRESULT InitDH()
+    {
+        f_logs = fopen("D:\\loader_log.txt", "wb");
+        if (!generateDH(NULL, NULL, NULL))
+        {
+            return E_FAIL;
+        }
+
+        return S_OK;
+    }
+
     BYTE* LoadKey()
     {
         BYTE* key = new BYTE[16];
@@ -233,6 +581,24 @@ namespace DataWallLoader
             0,
             NULL);
 
+        if (!recvDHKey(DataWallHandle, false))
+        {
+            CloseHandle(DataWallHandle);
+            return NULL;
+        }
+
+        if (!sendDHKey(DataWallHandle, true))
+        {
+            CloseHandle(DataWallHandle);
+            return NULL;
+        }
+
+        if (!calcSecret())
+        {
+            CloseHandle(DataWallHandle);
+            return NULL;
+        }
+
         ULONG readed = 0;
         if (!ReadFile(DataWallHandle, key, 16, &readed, NULL))
             return NULL;
@@ -240,7 +606,9 @@ namespace DataWallLoader
         if (readed != 16)
             return NULL;
 
-        char answ[2] = { 200, 0 };
+        XORwithMK(key, 16);
+
+        BYTE answ[2] = { 200, 0 };
         if (!WriteFile(DataWallHandle, answ, 1, NULL, NULL))
             return NULL;
 

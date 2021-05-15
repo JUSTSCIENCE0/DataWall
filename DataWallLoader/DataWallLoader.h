@@ -32,8 +32,10 @@ namespace DataWallLoader
     extern "C" DATAWALLLOADER_API HMEMORYMODULE LoadEncryptedLibrary(const char* path, BYTE * key);
     extern "C" DATAWALLLOADER_API void FreeEncryptedLibrary(HMEMORYMODULE handle);
     extern "C" DATAWALLLOADER_API FARPROC LoadEncryptedFunction(HMEMORYMODULE handle, const char* name);
-    
-    extern "C" DATAWALLLOADER_API BYTE * LoadKey();
+    extern "C" DATAWALLLOADER_API HRESULT InitDH();
+
+    extern "C" DATAWALLLOADER_API HRESULT SendKey(const char* soft_name, BYTE* key);
+    extern "C" DATAWALLLOADER_API BYTE*   LoadKey();
     extern "C" DATAWALLLOADER_API HRESULT ReadFromContainer(
         const char* container_name, 
         BYTE * key, 

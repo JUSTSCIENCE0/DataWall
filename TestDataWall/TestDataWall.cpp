@@ -25,18 +25,7 @@ int CALLBACK WinMain(
     _In_ LPSTR     lpCmdLine,
     _In_ int       nCmdShow)
 {
-    /*BYTE key[16] = { 
-        12, 159, 215, 177, 
-        120, 46, 30, 5,
-        88, 13, 240, 142,
-        32, 69, 124, 216
-    };*/
     BYTE* key = DataWallLoader::LoadKey();
-
-    MessageBox(NULL,
-        _T(lpCmdLine),
-        _T("Info"),
-        NULL);
 
     HMEMORYMODULE hDLL;
     INITWIND  InitializeWindow;

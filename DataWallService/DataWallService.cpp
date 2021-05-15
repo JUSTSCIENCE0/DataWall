@@ -244,6 +244,7 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
 
 DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 {
+    HRESULT hr;
     hNamedPipe = CreateNamedPipe("\\\\.\\pipe\\datawallpipe",
         PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
@@ -261,7 +262,15 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
     }
     print_log("Start work: Created named pipe");
 
-    HRESULT hr = DataWallEngine::InitializeEngine(ENGINE_LOG, false, "192.168.56.1", 22876);
+    hr = DataWallLoader::InitDH();
+    if (FAILED(hr))
+    {
+        print_log("Error in initialize DH");
+        SET_FAILED;
+        return hr;
+    }
+
+    hr = DataWallEngine::InitializeEngine(ENGINE_LOG, false, "192.168.56.1", 22876);
     if (FAILED(hr))
     {
         print_log("Error in initialize engine");
@@ -494,46 +503,12 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
             hr = DataWallEngine::GenerateKey(sys_info, lib_code, current_key);
             if (FAILED(hr)) BREAK_FAILED
 
-            char pipename[1500];
-            snprintf(pipename, 1500, "\\\\.\\pipe\\%s", lib_name.c_str());
-
-            HANDLE hSoftPipe = CreateNamedPipe(pipename,
-                PIPE_ACCESS_DUPLEX,
-                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-                1,
-                1024 * 16,
-                1024 * 16,
-                NMPWAIT_USE_DEFAULT_WAIT,
-                NULL);
-            if (hSoftPipe == INVALID_HANDLE_VALUE)
+            hr = DataWallLoader::SendKey(lib_name.c_str(), current_key);
+            if (FAILED(hr))
             {
-                print_log("Failed to create named pipe");
+                print_log("Error when send key");
                 BREAK_FAILED
             }
-            print_log("Pipe created");
-
-            if (!ConnectNamedPipe(hSoftPipe, NULL))
-            {
-                print_log("Failed to connect client to named pipe");
-                BREAK_FAILED
-            }
-            print_log("Client connected to named pipe");
-
-            ULONG writen;
-            if (!WriteFile(hSoftPipe, current_key, 16, &writen, NULL))
-            {
-                print_log("Error when write key");
-                BREAK_FAILED
-            }
-
-            char buff[2];
-            ULONG readen;
-            if (!ReadFile(hSoftPipe, buff, 2, &readen, NULL))
-            {
-                print_log("Error when read answer");
-                BREAK_FAILED
-            }
-            CloseHandle(hSoftPipe);
 
             BYTE ok_answ[2] = { 200, 0 };
             WriteString((char*)ok_answ);
