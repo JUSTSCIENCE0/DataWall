@@ -294,5 +294,20 @@ namespace DataWallClient
             Workspace.Visible = true;
             WaitPanel.Visible = false;
         }
+
+        private void Check_Click(object sender, EventArgs e)
+        {
+            Unit selectedUnit = (Unit)LibraryList.SelectedItem;
+            RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+            string InstallPath = soft_key.GetValue("InstallPath").ToString();
+            byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
+            InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
+
+            SendCode(130);
+            SendMessage(InstallPath);
+
+            byte result = RecvCode();
+        }
     }
 }

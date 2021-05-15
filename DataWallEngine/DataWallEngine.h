@@ -72,4 +72,6 @@ namespace DataWallEngine
 
     extern "C" DATAWALLENGINE_API HRESULT PackInContainer(BYTE* data, INT32 size, ContentType type, BYTE* key, const char* container_name);
     extern "C" DATAWALLENGINE_API HRESULT ReadFromContainer(const char* container_name, BYTE* key, BYTE* &data, INT32 &size, ContentType &type);
+
+    extern "C" DATAWALLENGINE_API HRESULT CalculateSoftHASH(const char* path, BYTE * state);
 }

@@ -1203,4 +1203,66 @@ namespace DataWallEngine
         delete[] header;
         return S_OK;
     }
+
+    HRESULT CalculateSoftHASH(const char* path, BYTE* state)
+    {
+        if (!path)
+            return E_INVALIDARG;
+
+        if (!state)
+            return E_INVALIDARG;
+
+        print_log("Start calculate soft hash");
+        std::string search_path = std::string(path) + "\\*";
+        WIN32_FIND_DATA fd;
+        HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
+
+        if (hFind == INVALID_HANDLE_VALUE)
+        {
+            print_log("Not found any files!");
+            return E_FAIL;
+        }
+
+        do {
+            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            {
+                BYTE file_hash[32] = "";
+                DWORD file_size = fd.nFileSizeLow;
+                BYTE* file_data = new BYTE[file_size];
+                std::string file_path = std::string(path) + "\\" + fd.cFileName;
+
+                FILE* f = fopen(file_path.c_str(), "rb");
+                if (!f)
+                {
+                    print_log("Couldn't open file: %s", fd.cFileName);
+                    delete[] file_data;
+                    return E_FAIL;
+                }
+                if (fread(file_data, 1, file_size, f) != file_size)
+                {
+                    print_log("Error when read file: %s", fd.cFileName);
+                    delete[] file_data;
+                    return E_FAIL;
+                }
+                fclose(f);
+
+                HRESULT hr = CalculateHash(file_data, file_size, file_hash);
+                if (FAILED(hr))
+                {
+                    print_log("Error when calc hash file: %s", fd.cFileName);
+                    delete[] file_data;
+                    return E_FAIL;
+                }
+
+                for (int i = 0; i < 32; i++)
+                {
+                    state[i] ^= file_hash[i];
+                }
+            }
+        } while (::FindNextFile(hFind, &fd));
+        ::FindClose(hFind);
+        
+        print_log("Success!");
+        return S_OK;
+    }
 }

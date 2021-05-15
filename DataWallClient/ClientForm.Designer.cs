@@ -46,15 +46,11 @@ namespace DataWallClient
             this.Delete = new System.Windows.Forms.Button();
             this.Download = new System.Windows.Forms.Button();
             this.LibraryList = new System.Windows.Forms.ListBox();
-            this.Store = new System.Windows.Forms.TabPage();
-            this.Add = new System.Windows.Forms.Button();
-            this.StoreList = new System.Windows.Forms.ListBox();
             this.AuthPanel.SuspendLayout();
             this.Workspace.SuspendLayout();
             this.tabWorkspace.SuspendLayout();
             this.MyLibrary.SuspendLayout();
             this.WaitPanel.SuspendLayout();
-            this.Store.SuspendLayout();
             this.SuspendLayout();
             // 
             // AuthPanel
@@ -126,7 +122,6 @@ namespace DataWallClient
             // tabWorkspace
             // 
             this.tabWorkspace.Controls.Add(this.MyLibrary);
-            this.tabWorkspace.Controls.Add(this.Store);
             this.tabWorkspace.Location = new System.Drawing.Point(10, 13);
             this.tabWorkspace.Name = "tabWorkspace";
             this.tabWorkspace.SelectedIndex = 0;
@@ -199,6 +194,7 @@ namespace DataWallClient
             this.Check.TabIndex = 3;
             this.Check.Text = "Проверить файлы";
             this.Check.UseVisualStyleBackColor = true;
+            this.Check.Click += new System.EventHandler(this.Check_Click);
             // 
             // Delete
             // 
@@ -232,38 +228,6 @@ namespace DataWallClient
             this.LibraryList.TabIndex = 0;
             this.LibraryList.SelectedIndexChanged += new System.EventHandler(this.LibraryList_SelectedIndexChanged);
             // 
-            // Store
-            // 
-            this.Store.Controls.Add(this.Add);
-            this.Store.Controls.Add(this.StoreList);
-            this.Store.Location = new System.Drawing.Point(4, 24);
-            this.Store.Name = "Store";
-            this.Store.Padding = new System.Windows.Forms.Padding(3);
-            this.Store.Size = new System.Drawing.Size(430, 382);
-            this.Store.TabIndex = 1;
-            this.Store.Text = "Магазин";
-            this.Store.UseVisualStyleBackColor = true;
-            // 
-            // Add
-            // 
-            this.Add.Enabled = false;
-            this.Add.Location = new System.Drawing.Point(305, 326);
-            this.Add.Name = "Add";
-            this.Add.Size = new System.Drawing.Size(121, 41);
-            this.Add.TabIndex = 6;
-            this.Add.Text = "Добавить в библиотеку";
-            this.Add.UseVisualStyleBackColor = true;
-            // 
-            // StoreList
-            // 
-            this.StoreList.FormattingEnabled = true;
-            this.StoreList.ItemHeight = 15;
-            this.StoreList.Location = new System.Drawing.Point(3, 3);
-            this.StoreList.Name = "StoreList";
-            this.StoreList.Size = new System.Drawing.Size(296, 364);
-            this.StoreList.TabIndex = 1;
-            this.StoreList.Visible = false;
-            // 
             // ClientForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -282,7 +246,6 @@ namespace DataWallClient
             this.MyLibrary.ResumeLayout(false);
             this.WaitPanel.ResumeLayout(false);
             this.WaitPanel.PerformLayout();
-            this.Store.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -298,15 +261,12 @@ namespace DataWallClient
         private System.Windows.Forms.Panel Workspace;
         private System.Windows.Forms.TabControl tabWorkspace;
         private System.Windows.Forms.TabPage MyLibrary;
-        private System.Windows.Forms.TabPage Store;
         private System.Windows.Forms.ListBox LibraryList;
         private System.Windows.Forms.Button Check;
         private System.Windows.Forms.Button Delete;
         private System.Windows.Forms.Button Download;
         private System.Windows.Forms.Button Run;
         private System.Windows.Forms.Button Repack;
-        private System.Windows.Forms.Button Add;
-        private System.Windows.Forms.ListBox StoreList;
         private System.Windows.Forms.Panel WaitPanel;
         private System.Windows.Forms.Label label3;
     }
