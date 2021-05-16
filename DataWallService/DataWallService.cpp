@@ -196,7 +196,15 @@ START:
     CloseHandle(g_ServiceStopEvent);
 
     //Service unstoppable
-    //goto START;
+    if (!bWasFail)
+    {
+        print_log("Service unstoppable");
+        goto START;
+    }
+    else
+    {
+        print_log("Was FAIL, server stopped");
+    }
 
     g_ServiceStatus.dwControlsAccepted = 0;
     g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
@@ -217,7 +225,7 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
     {
     case SERVICE_CONTROL_STOP:
 
-        if (g_ServiceStatus.dwCurrentState != SERVICE_RUNNING)
+        /*if (g_ServiceStatus.dwCurrentState != SERVICE_RUNNING)
             break;
 
         SetEvent(g_ServiceStopEvent);
@@ -233,7 +241,7 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
         }
 
         DataWallEngine::UninitializeEngine();
-        print_log("SERVICE_CONTROL_STOP");
+        print_log("SERVICE_CONTROL_STOP");*/
 
         break;
 
@@ -390,7 +398,7 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
     while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
     {
         char str[1024];
-        if (!ReadString(str)) BREAK_FAILED
+        if (!ReadString(str)) break;
         print_log("string from pipe: %s", str);
 
         if ((BYTE)str[0] == 230)

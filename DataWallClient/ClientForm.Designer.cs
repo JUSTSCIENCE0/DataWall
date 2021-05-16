@@ -184,6 +184,7 @@ namespace DataWallClient
             this.Repack.TabIndex = 4;
             this.Repack.Text = "Переупаковать";
             this.Repack.UseVisualStyleBackColor = true;
+            this.Repack.Click += new System.EventHandler(this.Repack_Click);
             // 
             // Check
             // 

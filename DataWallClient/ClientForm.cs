@@ -278,6 +278,18 @@ namespace DataWallClient
             List<string> files = new List<string>(Directory.GetFiles(InstallPath));
             string binPath = files.Find(file => file.Contains(".exe"));
 
+            //Hash check before launch
+
+            SendCode(130);
+            SendMessage(selectedUnit.code.ToString());
+            SendMessage(InstallPath);
+
+            byte result = RecvCode();
+
+            if (result != 200)
+                MessageBox.Show("Сheck failed! Start cancelled!", "Warning!");
+
+            //Start
             SendCode(150);
             SendMessage(currentUnit.code.ToString());
 
@@ -289,7 +301,7 @@ namespace DataWallClient
             Workspace.Visible = false;
             WaitPanel.Visible = true;
 
-            byte result = RecvCode();
+            result = RecvCode();
 
             Workspace.Visible = true;
             WaitPanel.Visible = false;
@@ -311,9 +323,41 @@ namespace DataWallClient
             byte result = RecvCode();
 
             if (result == 200)
-                MessageBox.Show("Hash check passed!", "Success!");
+                MessageBox.Show("Сheck passed!", "Success!");
             else
-                MessageBox.Show("Hash check failed!", "Warning!");
+                MessageBox.Show("Сheck failed!", "Warning!");
+        }
+
+        private void Repack_Click(object sender, EventArgs e)
+        {
+            RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\DataWall\\" + currentUnit.ToString(), true);
+
+            string InstallPath = soft_key.GetValue("InstallPath").ToString();
+            byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
+            InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
+
+            Directory.Delete(InstallPath, true);
+
+            SendCode(110);
+            SendMessage(currentUnit.code.ToString());
+            SendMessage(InstallPath);
+
+            Workspace.Visible = false;
+            WaitPanel.Visible = true;
+
+            byte result = RecvCode();
+
+            Workspace.Visible = true;
+            WaitPanel.Visible = false;
+
+            if (result != 200)
+            {
+                MessageBox.Show("Error when load soft", "Error!");
+                return;
+            }
+
+            MessageBox.Show("Repacked!", "Success!");
         }
     }
 }
