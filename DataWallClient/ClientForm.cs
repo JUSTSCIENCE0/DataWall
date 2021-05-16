@@ -305,9 +305,15 @@ namespace DataWallClient
             InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
 
             SendCode(130);
+            SendMessage(selectedUnit.code.ToString());
             SendMessage(InstallPath);
 
             byte result = RecvCode();
+
+            if (result == 200)
+                MessageBox.Show("Hash check passed!", "Success!");
+            else
+                MessageBox.Show("Hash check failed!", "Warning!");
         }
     }
 }

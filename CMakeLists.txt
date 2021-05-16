@@ -12,5 +12,7 @@ add_subdirectory(DataWallServer)
 add_subdirectory(TestDataWall)
 add_subdirectory(TestDLL)
 
+INCLUDE_EXTERNAL_MSPROJECT(DataWallClient  ${CMAKE_SOURCE_DIR}/DataWallClient/DataWallClient.csproj)
+
 #${EXECUTABLE_OUTPUT_PATH}
 #

@@ -1286,4 +1286,60 @@ namespace DataWallEngine
         print_log("Success!");
         return S_OK;
     }
+
+    HRESULT CheckSoftHASH(const char* id, const char* path)
+    {
+        if (!Initialized)
+            return E_FAIL;
+
+        if (!id || !path)
+            return E_INVALIDARG;
+
+        print_log("Start check hash");
+
+        BYTE hash[32] = "";
+        HRESULT hr = CalculateSoftHASH(path, hash);
+
+        char text_hash[65] = "";
+        char* pntr = text_hash;
+        for (int i = 0; i < 32; i++, pntr += 2)
+        {
+            snprintf(pntr, 3, "%02X", hash[i]);
+        }
+        print_log("Soft hash: %s", text_hash);
+
+        BYTE req_code[1] = { 130 };
+        if (SendPacket(req_code, 1) != 1)
+        {
+            print_log("Failed to send requst");
+            return E_FAIL;
+        }
+        if (SendPacket((BYTE*)id, (int)strlen(id)) != strlen(id))
+        {
+            print_log("Failed to send id software");
+            return E_FAIL;
+        }
+        if (SendPacket((BYTE*)text_hash, (int)strlen(text_hash)) != strlen(text_hash))
+        {
+            print_log("Failed to send software hash");
+            return E_FAIL;
+        }
+
+        BYTE* answer = NULL;
+        int ans_size = 0;
+        if (RecvPacket(answer, ans_size))
+        {
+            print_log("Failed to recv answer server");
+            return E_FAIL;
+        }
+
+        if (answer[0] != 200)
+        {
+            print_log("Server send denied");
+            return S_FALSE;
+        }
+
+        print_log("Success!");
+        return S_OK;
+    }
 }

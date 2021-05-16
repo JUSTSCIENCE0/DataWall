@@ -479,24 +479,22 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
         if ((BYTE)str[0] == 130)
         {
             print_log("User want to check soft hash:");
-            char install_path[1024];
+            char id_software[10], install_path[1024];
+            if (!ReadString(id_software)) BREAK_FAILED
             if (!ReadString(install_path)) BREAK_FAILED
-            print_log("%s", install_path);
+            print_log("code %s at path %s", id_software, install_path);
 
-            BYTE soft_hash[32] = "";
-            hr = DataWallEngine::CalculateSoftHASH(install_path, soft_hash);
+            BYTE answ[2] = { 200, 0 };
+            hr = DataWallEngine::CheckSoftHASH(id_software, install_path);
             if (FAILED(hr)) BREAK_FAILED
-
-            char text[65] = "";
-            char* pntr = text;
-            for (int i = 0; i < 32; i++, pntr += 2)
+            if (hr == S_FALSE)
             {
-                snprintf(pntr, 3, "%02X", soft_hash[i]);
+                print_log("Check not passed");
+                answ[0] = 255;
             }
-            print_log("Soft hash: %s", text);
-
-            BYTE ok_answ[2] = { 200, 0 };
-            WriteString((char*)ok_answ);
+            print_log("Check passed");
+            
+            if (!WriteString((char*)answ)) BREAK_FAILED
         }
 
         if ((BYTE)str[0] == 150)

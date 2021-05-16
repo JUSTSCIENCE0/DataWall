@@ -19,7 +19,7 @@ set(SOURCES App.config
 			Properties/Settings.settings
 )
 
-add_executable(DataWallServer ${SOURCES})
+add_executable(DataWallServer WIN32 ${SOURCES})
 
 set_property(TARGET DataWallServer PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.7.2")
 set(CMAKE_CSharp_FLAGS "/langversion:latest")

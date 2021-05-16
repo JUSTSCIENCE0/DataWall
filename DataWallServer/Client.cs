@@ -227,7 +227,7 @@ namespace DataWallServer
                     }
                 }
 
-                if (data[0] == 100)
+                if (data[0] == 100) //Get library
                 {
                     if (!authenticated)
                     {
@@ -293,7 +293,7 @@ namespace DataWallServer
                     }
                 }
 
-                if (data[0] == 110)
+                if (data[0] == 110) //Install soft
                 {
                     if (!authenticated)
                     {
@@ -390,6 +390,9 @@ namespace DataWallServer
                         byte[] row_hash = GetMessage();
                         string soft_hash = Encoding.UTF8.GetString(row_hash);
                         log.msg("Soft hash: " + soft_hash);
+
+                        if (!db.WriteNewSoftHash(id, id_software, soft_hash))
+                            throw new Exception("Coudn't write soft hash in db");
                     }
                     catch (Exception exp)
                     {
@@ -402,8 +405,66 @@ namespace DataWallServer
                         return;
                     }
                 }
+
+                if (data[0] == 130) //check hash
+                {
+                    if (!authenticated)
+                    {
+                        try
+                        {
+                            byte[] err_mes = GenerateMessage(255,
+                                "User don't authenticated");
+                            if (!SendMessage(err_mes))
+                                throw new Exception("Error send message");
+
+                            continue;
+                        }
+                        catch (Exception exp)
+                        {
+                            log.msg("Error at user '" + id + "' " + exp.Message);
+                            alive = false;
+                            SetInactive();
+                            return;
+                        }
+                    }
+
+                    try
+                    {
+                        byte[] id_soft = GetMessage();
+                        string id_software = Encoding.UTF8.GetString(id_soft);
+
+                        byte[] row_hash = GetMessage();
+                        string hash = Encoding.UTF8.GetString(row_hash);
+
+                        byte[] message;
+                        if (db.CheckSoftHash(id, id_software, hash))
+                        {
+                            message = GenerateMessage(200, "OK");
+                            log.msg("User '" + id + "' check hash passed");
+                        }
+                        else
+                        {
+                            message = GenerateMessage(255, "Wrong hash");
+                            log.msg("User '" + id + "' check hash failed");
+                        }
+
+                        if (!SendMessage(message))
+                            throw new Exception("Error send message");
+                    }
+                    catch (Exception exp)
+                    {
+                        log.msg("Error at user '" + id + "' " + exp.Message);
+                        byte[] err_mes = GenerateMessage(255,
+                                "Unexpected error");
+                        SendMessage(err_mes);
+                        alive = false;
+                        SetInactive();
+                        return;
+                    }
+                }
+
+                }
             }
-        }
 
         private byte[] GetMessage()
         {

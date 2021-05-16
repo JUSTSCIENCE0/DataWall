@@ -574,5 +574,51 @@ namespace DataWallServer
 
             return result;
         }
+
+        public bool WriteNewSoftHash(string user, string id_software, string hash)
+        {
+            string sql = "UPDATE user_soft SET hash = '" + hash +
+                "' WHERE id_user = '" + user + "' AND id_soft = " + id_software;
+
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                mtx.ReleaseMutex();
+                return true;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
+        }
+
+        public bool CheckSoftHash(string user, string id_software, string hash)
+        {
+            string sql = "SELECT * FROM user_soft WHERE" +
+                " id_user = '" + user + "' AND" +
+                " id_soft = '" + id_software + "' AND" +
+                " hash = '" + hash + "'";
+
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                bool result = reader.HasRows;
+                reader.Close();
+                mtx.ReleaseMutex();
+                return result;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
+        }
     }
 }
