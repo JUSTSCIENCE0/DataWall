@@ -224,25 +224,6 @@ VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
     switch (CtrlCode)
     {
     case SERVICE_CONTROL_STOP:
-
-        /*if (g_ServiceStatus.dwCurrentState != SERVICE_RUNNING)
-            break;
-
-        SetEvent(g_ServiceStopEvent);
-
-        g_ServiceStatus.dwControlsAccepted = 0;
-        g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
-        g_ServiceStatus.dwWin32ExitCode = 0;
-        g_ServiceStatus.dwCheckPoint = 4;
-
-        if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
-        {
-            print_log("ServiceCtrlHandler: SetServiceStatus returned error");
-        }
-
-        DataWallEngine::UninitializeEngine();
-        print_log("SERVICE_CONTROL_STOP");*/
-
         break;
 
     default:

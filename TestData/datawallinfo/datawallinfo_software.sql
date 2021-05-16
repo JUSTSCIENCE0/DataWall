@@ -24,11 +24,11 @@ DROP TABLE IF EXISTS `software`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `software` (
   `id_software` int unsigned NOT NULL,
-  `active` bit(1) DEFAULT NULL,
   `name` varchar(45) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `code` int DEFAULT NULL,
+  `code` int NOT NULL,
   PRIMARY KEY (`id_software`),
-  UNIQUE KEY `id_software_UNIQUE` (`id_software`)
+  UNIQUE KEY `id_software_UNIQUE` (`id_software`),
+  UNIQUE KEY `code_UNIQUE` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -38,7 +38,7 @@ CREATE TABLE `software` (
 
 LOCK TABLES `software` WRITE;
 /*!40000 ALTER TABLE `software` DISABLE KEYS */;
-INSERT INTO `software` VALUES (1,_binary '\0','TestSoft',2044805504);
+INSERT INTO `software` VALUES (1,'TestSoft',2044805504);
 /*!40000 ALTER TABLE `software` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -51,4 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-05-05 23:12:50
+-- Dump completed on 2021-05-16 21:09:25

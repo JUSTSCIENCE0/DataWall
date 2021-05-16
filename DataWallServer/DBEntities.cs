@@ -33,7 +33,6 @@ namespace DataWallServer
         public UInt64 id_software;
         public string name;
         public UInt64 product_code;
-        public bool active;
     }
 
     struct DBDevice //computer
@@ -193,8 +192,7 @@ namespace DataWallServer
                     {
                         id_software = Convert.ToUInt64(reader["id_software"]),
                         name = reader["name"].ToString(),
-                        product_code = Convert.ToUInt64(reader["code"]),
-                        active = Convert.ToBoolean(reader["active"])
+                        product_code = Convert.ToUInt64(reader["code"])
                     });
                 }
                 reader.Close();
@@ -560,7 +558,6 @@ namespace DataWallServer
                 result.id_software = Convert.ToUInt64(reader["id_software"]);
                 result.name = reader["name"].ToString();
                 result.product_code = Convert.ToUInt64(reader["code"]);
-                result.active = Convert.ToBoolean(reader["active"]);
 
                 reader.Close();
                 mtx.ReleaseMutex();

@@ -86,7 +86,6 @@ namespace DataWallServer
                 {
                     SoftDataGrid.Rows.Add(
                         software.id_software,
-                        software.active,
                         software.name,
                         software.product_code);
                 }
@@ -149,7 +148,6 @@ namespace DataWallServer
             {
                 SoftDataGrid.Rows.Add(
                     software.id_software,
-                    software.active,
                     software.name,
                     software.product_code);
             }
