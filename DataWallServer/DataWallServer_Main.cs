@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
+using System.Security.Cryptography;
 
 namespace DataWallServer
 {
@@ -27,6 +28,15 @@ namespace DataWallServer
                 "datawallinfo", "3306", "root",
                 "192837465564738291yashka");
             server = new Server(22876, ref log, "D:\\DataWall\\DataWall.cer", ref db);
+
+            //SHA256 mySHA = SHA256.Create();
+            //byte[] hashValue = mySHA.ComputeHash(Encoding.UTF8.GetBytes("user"));
+            //string hexHash = "";
+            //for (int i = 0; i < hashValue.Length; i++)
+            //{
+            //    hexHash += hashValue[i].ToString("X2");
+            //}
+            //log.msg("Test: " + hexHash);
 
             DrawActivitiesTable(ActivityType.ALL_USERS);
             DrawUsersList();

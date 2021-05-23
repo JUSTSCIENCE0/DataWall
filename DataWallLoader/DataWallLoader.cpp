@@ -198,7 +198,7 @@ BOOL generateDH(
         g_char == NULL)
     {
         if (1 != DH_generate_parameters_ex
-        (private_key, 2048, DH_GENERATOR_2, NULL))
+        (private_key, 512, DH_GENERATOR_2, NULL))
             return false;
     }
     else

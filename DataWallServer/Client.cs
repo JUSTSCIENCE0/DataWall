@@ -10,6 +10,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace DataWallServer
 {
@@ -19,7 +20,31 @@ namespace DataWallServer
         IMG = 0x474D49,
         TXT = 0x545854,
         SND = 0x444E53,
-        BIN = 0x4E4942
+        BIN = 0x4E4942,
+        NON = 0x0
+    }
+
+    struct DWFileInfo
+    {
+        public string name;
+        public ContentTypes type;
+
+        public DWFileInfo(string _name, ContentTypes _type)
+        {
+            name = _name;
+            type = _type;
+        }
+    }
+
+    class DataWallEngine
+    {
+        [DllImport("DataWallEngine.dll", EntryPoint = "PackInContainer")]
+        public static extern int PackInContainer(
+            byte[] data, 
+            int size, 
+            int type, 
+            byte[] key, 
+            byte[] container_name);
     }
 
     class Client
@@ -28,6 +53,8 @@ namespace DataWallServer
 
         public SslStream sslStream;
         private string id = "0";
+        private string user_code = "0";
+        private string user_pc = "";
         private Logger log;
 
         private Mutex mutex;
@@ -119,6 +146,7 @@ namespace DataWallServer
                             id = nick;
                             DBUser userInfo = db.LoadUserData(id);
                             message = GenerateMessage(200, userInfo.user_code.ToString());
+                            user_code = userInfo.user_code.ToString();
                             db.SetUserActive(id, true);
                             log.msg("User '" + id + "' auth success");
                         }
@@ -215,6 +243,8 @@ namespace DataWallServer
 
                         if (!db.SetDeviceActive(device, true))
                             throw new Exception("Failed to activate device");
+
+                        user_pc = cpu + " " + mb + " " + gpu;
 
                         continue;
                     }
@@ -323,13 +353,19 @@ namespace DataWallServer
                         DBUnit soft = db.LoadUnitInfo(Convert.ToUInt64(id_software));
                         log.msg("User '" + id + "' want software " + soft.name);
 
+                        string key_info = user_pc + " " + 
+                            user_code + " " + soft.product_code.ToString();
+                        byte[] row_key_info = Encoding.UTF8.GetBytes(key_info);
+                        SHA256 sha = SHA256.Create();
+                        byte[] key = sha.ComputeHash(row_key_info);
+
                         string config = "D:\\DataWall\\" +
                             id_software + " " + soft.name + "\\files.info";
                         StreamReader conf_reader = new StreamReader(config);
                         List<byte[]> config_list = new List<byte[]>();
                         byte[] b200 = { 200 };
                         config_list.Add(b200);
-                        List<string> files = new List<string>();
+                        List<DWFileInfo> files = new List<DWFileInfo>();
                         while (!conf_reader.EndOfStream)
                         {
                             byte[] btype = { 0 };
@@ -339,6 +375,7 @@ namespace DataWallServer
                             string fname = conf_reader.ReadLine();
                             string type = conf_reader.ReadLine();
                             string content_code = "";
+                            ContentTypes DW_type = ContentTypes.NON;
                             if (type == "1")
                             {
                                 btype[0] = 1;
@@ -346,29 +383,35 @@ namespace DataWallServer
                                 switch (content_code)
                                 {
                                     case "DLL":
+                                        DW_type = ContentTypes.DLL;
                                         bcontent = BitConverter.GetBytes((Int32)ContentTypes.DLL);
                                         break;
                                     case "IMG":
+                                        DW_type = ContentTypes.IMG;
                                         bcontent = BitConverter.GetBytes((Int32)ContentTypes.IMG);
                                         break;
                                     case "TXT":
+                                        DW_type = ContentTypes.TXT;
                                         bcontent = BitConverter.GetBytes((Int32)ContentTypes.TXT);
                                         break;
                                     case "SND":
+                                        DW_type = ContentTypes.SND;
                                         bcontent = BitConverter.GetBytes((Int32)ContentTypes.SND);
                                         break;
                                     case "BIN":
+                                        DW_type = ContentTypes.BIN;
                                         bcontent = BitConverter.GetBytes((Int32)ContentTypes.BIN);
                                         break;
                                 }
                             }
+
                             config_list.Add(btype);
                             config_list.Add(bcontent);
                             config_list.Add(Encoding.UTF8.GetBytes(fname));
                             config_list.Add(bnull);
 
-                            files.Add("D:\\DataWall\\" +
-                            id_software + " " + soft.name + "\\" + fname);
+                            files.Add(new DWFileInfo("D:\\DataWall\\" +
+                            id_software + " " + soft.name + "\\" + fname, DW_type));
                         }
 
                         byte[] eof = { 255 };
@@ -379,12 +422,31 @@ namespace DataWallServer
                         byte[] answer = tmp.SelectMany(x=>x).ToArray();
                         SendMessage(answer);
 
-                        foreach (string file in files)
+                        foreach (DWFileInfo file in files)
                         {
-                            BinaryReader file_reader = new BinaryReader(File.OpenRead(file));
-                            FileInfo info = new FileInfo(file);
+                            BinaryReader file_reader = new BinaryReader(File.OpenRead(file.name));
+                            FileInfo info = new FileInfo(file.name);
                             byte[] file_data = file_reader.ReadBytes((int)info.Length);
-                            SendMessage(file_data);
+                            file_reader.Close();
+                            if (file.type == ContentTypes.NON)
+                                SendMessage(file_data);
+                            else
+                            {
+                                string tmp_name = "D:\\DataWall\\temp\\" + 
+                                    user_code + "_" + file.name.GetHashCode() + ".pak";
+                                DataWallEngine.PackInContainer(
+                                    file_data,
+                                    (int)info.Length,
+                                    (int)file.type,
+                                    key,
+                                    Encoding.UTF8.GetBytes(tmp_name));
+                                BinaryReader encr_reader = new BinaryReader(File.OpenRead(tmp_name));
+                                FileInfo encr_info = new FileInfo(tmp_name);
+                                byte[] encr_data = encr_reader.ReadBytes((int)encr_info.Length);
+                                encr_reader.Close();
+                                SendMessage(encr_data);
+                                File.Delete(tmp_name);
+                            }
                         }
 
                         byte[] row_hash = GetMessage();
