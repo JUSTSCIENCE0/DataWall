@@ -36,8 +36,6 @@ csharp_set_windows_forms_properties(
     Properties/Settings.settings
 )
 
-set_property(TARGET DataWallServer PROPERTY CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE x64)
-
 set_property(TARGET DataWallServer PROPERTY VS_DOTNET_REFERENCES
     "Microsoft.CSharp"
     "System"

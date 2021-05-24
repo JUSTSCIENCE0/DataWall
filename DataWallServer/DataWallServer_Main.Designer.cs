@@ -50,12 +50,26 @@ namespace DataWallServer
             this.SelectUser = new System.Windows.Forms.Label();
             this.UsersList = new System.Windows.Forms.ComboBox();
             this.SoftDataGrid = new System.Windows.Forms.DataGridView();
-            this.ConsoleTab = new System.Windows.Forms.TabPage();
-            this.ConsoleText = new System.Windows.Forms.TextBox();
-            this.Redriver = new System.Windows.Forms.Timer(this.components);
             this.id_software = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.name = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ConsoleTab = new System.Windows.Forms.TabPage();
+            this.ConsoleText = new System.Windows.Forms.TextBox();
+            this.DBActions = new System.Windows.Forms.TabPage();
+            this.Redriver = new System.Windows.Forms.Timer(this.components);
+            this.AddUserPanel = new System.Windows.Forms.GroupBox();
+            this.userName = new System.Windows.Forms.TextBox();
+            this.password = new System.Windows.Forms.TextBox();
+            this.AddUser = new System.Windows.Forms.Button();
+            this.AddSoftPanel = new System.Windows.Forms.GroupBox();
+            this.SoftName = new System.Windows.Forms.TextBox();
+            this.AddSoft = new System.Windows.Forms.Button();
+            this.GiveSoftToUser = new System.Windows.Forms.GroupBox();
+            this.SetUser = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.SetSoft = new System.Windows.Forms.ComboBox();
+            this.SetUserSoft = new System.Windows.Forms.Button();
             this.Workspace.SuspendLayout();
             this.UsersActivities.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ActivitiesGrid)).BeginInit();
@@ -63,12 +77,17 @@ namespace DataWallServer
             ((System.ComponentModel.ISupportInitialize)(this.DeviceDataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SoftDataGrid)).BeginInit();
             this.ConsoleTab.SuspendLayout();
+            this.DBActions.SuspendLayout();
+            this.AddUserPanel.SuspendLayout();
+            this.AddSoftPanel.SuspendLayout();
+            this.GiveSoftToUser.SuspendLayout();
             this.SuspendLayout();
             // 
             // Workspace
             // 
             this.Workspace.Controls.Add(this.UsersActivities);
             this.Workspace.Controls.Add(this.UsersData);
+            this.Workspace.Controls.Add(this.DBActions);
             this.Workspace.Controls.Add(this.ConsoleTab);
             this.Workspace.Location = new System.Drawing.Point(13, 13);
             this.Workspace.Name = "Workspace";
@@ -279,33 +298,6 @@ namespace DataWallServer
             this.SoftDataGrid.Size = new System.Drawing.Size(368, 360);
             this.SoftDataGrid.TabIndex = 0;
             // 
-            // ConsoleTab
-            // 
-            this.ConsoleTab.Controls.Add(this.ConsoleText);
-            this.ConsoleTab.Location = new System.Drawing.Point(4, 22);
-            this.ConsoleTab.Name = "ConsoleTab";
-            this.ConsoleTab.Padding = new System.Windows.Forms.Padding(3);
-            this.ConsoleTab.Size = new System.Drawing.Size(767, 399);
-            this.ConsoleTab.TabIndex = 2;
-            this.ConsoleTab.Text = "Console";
-            this.ConsoleTab.UseVisualStyleBackColor = true;
-            // 
-            // ConsoleText
-            // 
-            this.ConsoleText.Location = new System.Drawing.Point(7, 4);
-            this.ConsoleText.Multiline = true;
-            this.ConsoleText.Name = "ConsoleText";
-            this.ConsoleText.ReadOnly = true;
-            this.ConsoleText.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.ConsoleText.Size = new System.Drawing.Size(754, 389);
-            this.ConsoleText.TabIndex = 0;
-            // 
-            // Redriver
-            // 
-            this.Redriver.Enabled = true;
-            this.Redriver.Interval = 1000;
-            this.Redriver.Tick += new System.EventHandler(this.Redriver_Tick);
-            // 
             // id_software
             // 
             this.id_software.Frozen = true;
@@ -327,6 +319,166 @@ namespace DataWallServer
             this.dataGridViewTextBoxColumn1.HeaderText = "code";
             this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
             this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            // 
+            // ConsoleTab
+            // 
+            this.ConsoleTab.Controls.Add(this.ConsoleText);
+            this.ConsoleTab.Location = new System.Drawing.Point(4, 22);
+            this.ConsoleTab.Name = "ConsoleTab";
+            this.ConsoleTab.Padding = new System.Windows.Forms.Padding(3);
+            this.ConsoleTab.Size = new System.Drawing.Size(767, 399);
+            this.ConsoleTab.TabIndex = 2;
+            this.ConsoleTab.Text = "Console";
+            this.ConsoleTab.UseVisualStyleBackColor = true;
+            // 
+            // ConsoleText
+            // 
+            this.ConsoleText.Location = new System.Drawing.Point(7, 4);
+            this.ConsoleText.Multiline = true;
+            this.ConsoleText.Name = "ConsoleText";
+            this.ConsoleText.ReadOnly = true;
+            this.ConsoleText.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.ConsoleText.Size = new System.Drawing.Size(754, 389);
+            this.ConsoleText.TabIndex = 0;
+            // 
+            // DBActions
+            // 
+            this.DBActions.Controls.Add(this.GiveSoftToUser);
+            this.DBActions.Controls.Add(this.AddSoftPanel);
+            this.DBActions.Controls.Add(this.AddUserPanel);
+            this.DBActions.Location = new System.Drawing.Point(4, 22);
+            this.DBActions.Name = "DBActions";
+            this.DBActions.Padding = new System.Windows.Forms.Padding(3);
+            this.DBActions.Size = new System.Drawing.Size(767, 399);
+            this.DBActions.TabIndex = 3;
+            this.DBActions.Text = "Взаимодействие с БД";
+            this.DBActions.UseVisualStyleBackColor = true;
+            // 
+            // Redriver
+            // 
+            this.Redriver.Enabled = true;
+            this.Redriver.Interval = 1000;
+            this.Redriver.Tick += new System.EventHandler(this.Redriver_Tick);
+            // 
+            // AddUserPanel
+            // 
+            this.AddUserPanel.Controls.Add(this.AddUser);
+            this.AddUserPanel.Controls.Add(this.password);
+            this.AddUserPanel.Controls.Add(this.userName);
+            this.AddUserPanel.Location = new System.Drawing.Point(6, 6);
+            this.AddUserPanel.Name = "AddUserPanel";
+            this.AddUserPanel.Size = new System.Drawing.Size(248, 100);
+            this.AddUserPanel.TabIndex = 0;
+            this.AddUserPanel.TabStop = false;
+            this.AddUserPanel.Text = "Добавить пользователя";
+            // 
+            // userName
+            // 
+            this.userName.Location = new System.Drawing.Point(7, 20);
+            this.userName.Name = "userName";
+            this.userName.Size = new System.Drawing.Size(235, 20);
+            this.userName.TabIndex = 0;
+            // 
+            // password
+            // 
+            this.password.Location = new System.Drawing.Point(6, 46);
+            this.password.Name = "password";
+            this.password.Size = new System.Drawing.Size(235, 20);
+            this.password.TabIndex = 1;
+            // 
+            // AddUser
+            // 
+            this.AddUser.Location = new System.Drawing.Point(166, 71);
+            this.AddUser.Name = "AddUser";
+            this.AddUser.Size = new System.Drawing.Size(75, 23);
+            this.AddUser.TabIndex = 2;
+            this.AddUser.Text = "Добавить";
+            this.AddUser.UseVisualStyleBackColor = true;
+            this.AddUser.Click += new System.EventHandler(this.AddUser_Click);
+            // 
+            // AddSoftPanel
+            // 
+            this.AddSoftPanel.Controls.Add(this.AddSoft);
+            this.AddSoftPanel.Controls.Add(this.SoftName);
+            this.AddSoftPanel.Location = new System.Drawing.Point(6, 112);
+            this.AddSoftPanel.Name = "AddSoftPanel";
+            this.AddSoftPanel.Size = new System.Drawing.Size(248, 74);
+            this.AddSoftPanel.TabIndex = 1;
+            this.AddSoftPanel.TabStop = false;
+            this.AddSoftPanel.Text = "Добавить ПО";
+            // 
+            // SoftName
+            // 
+            this.SoftName.Location = new System.Drawing.Point(6, 19);
+            this.SoftName.Name = "SoftName";
+            this.SoftName.Size = new System.Drawing.Size(235, 20);
+            this.SoftName.TabIndex = 1;
+            // 
+            // AddSoft
+            // 
+            this.AddSoft.Location = new System.Drawing.Point(166, 45);
+            this.AddSoft.Name = "AddSoft";
+            this.AddSoft.Size = new System.Drawing.Size(75, 23);
+            this.AddSoft.TabIndex = 3;
+            this.AddSoft.Text = "Добавить";
+            this.AddSoft.UseVisualStyleBackColor = true;
+            // 
+            // GiveSoftToUser
+            // 
+            this.GiveSoftToUser.Controls.Add(this.SetUserSoft);
+            this.GiveSoftToUser.Controls.Add(this.label2);
+            this.GiveSoftToUser.Controls.Add(this.SetSoft);
+            this.GiveSoftToUser.Controls.Add(this.label1);
+            this.GiveSoftToUser.Controls.Add(this.SetUser);
+            this.GiveSoftToUser.Location = new System.Drawing.Point(6, 192);
+            this.GiveSoftToUser.Name = "GiveSoftToUser";
+            this.GiveSoftToUser.Size = new System.Drawing.Size(247, 148);
+            this.GiveSoftToUser.TabIndex = 2;
+            this.GiveSoftToUser.TabStop = false;
+            this.GiveSoftToUser.Text = "Выдать ПО пользователю";
+            // 
+            // SetUser
+            // 
+            this.SetUser.FormattingEnabled = true;
+            this.SetUser.Location = new System.Drawing.Point(5, 41);
+            this.SetUser.Name = "SetUser";
+            this.SetUser.Size = new System.Drawing.Size(235, 21);
+            this.SetUser.TabIndex = 2;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(7, 20);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(80, 13);
+            this.label1.TabIndex = 3;
+            this.label1.Text = "Пользователь";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(7, 68);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(23, 13);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "ПО";
+            // 
+            // SetSoft
+            // 
+            this.SetSoft.FormattingEnabled = true;
+            this.SetSoft.Location = new System.Drawing.Point(5, 89);
+            this.SetSoft.Name = "SetSoft";
+            this.SetSoft.Size = new System.Drawing.Size(235, 21);
+            this.SetSoft.TabIndex = 4;
+            // 
+            // SetUserSoft
+            // 
+            this.SetUserSoft.Location = new System.Drawing.Point(165, 116);
+            this.SetUserSoft.Name = "SetUserSoft";
+            this.SetUserSoft.Size = new System.Drawing.Size(75, 23);
+            this.SetUserSoft.TabIndex = 4;
+            this.SetUserSoft.Text = "Назначить";
+            this.SetUserSoft.UseVisualStyleBackColor = true;
             // 
             // DataWallServer_Main
             // 
@@ -351,6 +503,13 @@ namespace DataWallServer
             ((System.ComponentModel.ISupportInitialize)(this.SoftDataGrid)).EndInit();
             this.ConsoleTab.ResumeLayout(false);
             this.ConsoleTab.PerformLayout();
+            this.DBActions.ResumeLayout(false);
+            this.AddUserPanel.ResumeLayout(false);
+            this.AddUserPanel.PerformLayout();
+            this.AddSoftPanel.ResumeLayout(false);
+            this.AddSoftPanel.PerformLayout();
+            this.GiveSoftToUser.ResumeLayout(false);
+            this.GiveSoftToUser.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -383,6 +542,20 @@ namespace DataWallServer
         private System.Windows.Forms.DataGridViewTextBoxColumn id_software;
         private System.Windows.Forms.DataGridViewTextBoxColumn name;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.TabPage DBActions;
+        private System.Windows.Forms.GroupBox AddUserPanel;
+        private System.Windows.Forms.TextBox password;
+        private System.Windows.Forms.TextBox userName;
+        private System.Windows.Forms.Button AddUser;
+        private System.Windows.Forms.GroupBox AddSoftPanel;
+        private System.Windows.Forms.Button AddSoft;
+        private System.Windows.Forms.TextBox SoftName;
+        private System.Windows.Forms.GroupBox GiveSoftToUser;
+        private System.Windows.Forms.Button SetUserSoft;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ComboBox SetSoft;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ComboBox SetUser;
     }
 }
 

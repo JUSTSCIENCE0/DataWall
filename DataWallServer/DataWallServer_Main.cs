@@ -162,5 +162,22 @@ namespace DataWallServer
                     software.product_code);
             }
         }
+
+        private void AddUser_Click(object sender, EventArgs e)
+        {
+            if ((userName.Text == "") || (password.Text == ""))
+            {
+                MessageBox.Show("Wrong values");
+                return;
+            }
+
+            if (!db.RegisterNewUser(userName.Text, password.Text))
+            {
+                MessageBox.Show("Error when add new user");
+                return;
+            }
+
+            MessageBox.Show("New user added");
+        }
     }
 }

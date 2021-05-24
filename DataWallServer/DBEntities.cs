@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using System.Threading;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace DataWallServer
 {
@@ -376,35 +378,41 @@ namespace DataWallServer
             }
         }
 
-        public bool RegisterNewUser(DBUser user)
+        public bool RegisterNewUser(string login, string passwd)
         {
-            //int active = 0;
-            //if (user.active)
-            //    active = 1;
+            SHA256 sha = SHA256.Create();
+            byte[] row_passwd_hash =
+                sha.ComputeHash(Encoding.UTF8.GetBytes(passwd));
+            string passwd_hash = "";
 
-            return false;
+            for (int i = 0; i < row_passwd_hash.Length; i++)
+                passwd_hash += row_passwd_hash[i].ToString("X2");
 
-            //string sql = "INSERT INTO user SET" +
-            //    " id_user = " + user.id_user.ToString() +
-            //    ", nickname = '" + user.nickname +
-            //    "', password_hash = '" + user.passwd_hash +
-            //    "', user_code = " + user.user_code +
-            //    ", active = " + active.ToString();
+            Random rnd = new Random();
+            byte[] row_code = new byte[4];
+            rnd.NextBytes(row_code);
+            UInt32 code = BitConverter.ToUInt32(row_code, 0);
 
-            //try
-            //{
-            //    mtx.WaitOne();
-            //    MySqlCommand command = new MySqlCommand(sql, conn);
-            //    command.ExecuteNonQuery();
-            //    mtx.ReleaseMutex();
-            //    return true;
-            //}
-            //catch (Exception exp)
-            //{
-            //    log.msg("Database error - " + exp.Message + " for query :" + sql);
-            //    mtx.ReleaseMutex();
-            //    return false;
-            //}
+            string sql = "INSERT INTO user SET" +
+                " login = '" + login +
+                "', passwd_hash = '" + passwd_hash +
+                "', code = " + code.ToString() +
+                ", active = " + (0).ToString();
+
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                mtx.ReleaseMutex();
+                return true;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
         }
 
         public Int64 LoadDevice(string mb, string cpu, string gpu)
