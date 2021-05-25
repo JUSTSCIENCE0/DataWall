@@ -934,6 +934,7 @@ namespace DataWallEngine
             pntr += 8;
             library[i].name = std::string((const char*)pntr);
             pntr += strlen((const char*)pntr);
+            pntr += 1;
         }
 
         delete[] answer;

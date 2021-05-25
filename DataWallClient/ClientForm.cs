@@ -38,6 +38,7 @@ namespace DataWallClient
         private List<Unit> lib_units = new List<Unit>();
         private string currentPath = "";
         private Unit currentUnit;
+        private string login = "";
 
         private void SendMessage(string message)
         {
@@ -110,13 +111,6 @@ namespace DataWallClient
                 Environment.Exit(-1);
             }
 
-            RegistryKey dwKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\DataWall", true);
-            if (dwKey == null)
-            {
-                dwKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\DataWall", true);
-            }
-            dwKey.Close();
-
             InitializeComponent();
         }
 
@@ -134,6 +128,14 @@ namespace DataWallClient
                     MessageBox.Show("Auth successfull");
                     AuthPanel.Visible = false;
                     Workspace.Visible = true;
+
+                    login = Login.Text;
+                    RegistryKey dwKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\DataWall\\" + login, true);
+                    if (dwKey == null)
+                    {
+                        dwKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\DataWall\\" + login, true);
+                    }
+                    dwKey.Close();
 
                     SendCode(100);
 
@@ -172,11 +174,11 @@ namespace DataWallClient
 
             Unit selectedUnit = (Unit)LibraryList.SelectedItem;
             RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
-                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + selectedUnit.ToString(), true);
             if (soft_key == null)
             {
                 soft_key = Registry.LocalMachine.CreateSubKey(
-                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + selectedUnit.ToString(), true);
                 soft_key.SetValue("Installed", "false");
                 soft_key.SetValue("InstallPath", "");
             }
@@ -231,10 +233,10 @@ namespace DataWallClient
 
             MessageBox.Show("Downloaded!", "Success!");
 
-            string installPath = (folderBrowser.SelectedPath + currentUnit.name);
+            string installPath = (folderBrowser.SelectedPath + "\\" + currentUnit.name);
 
             RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
-                    "SOFTWARE\\DataWall\\" + currentUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + currentUnit.ToString(), true);
             soft_key.SetValue("Installed", "true");
             soft_key.SetValue("InstallPath", installPath);
 
@@ -248,7 +250,7 @@ namespace DataWallClient
         private void Delete_Click(object sender, EventArgs e)
         {
             RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
-                    "SOFTWARE\\DataWall\\" + currentUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + currentUnit.ToString(), true);
 
             string InstallPath = soft_key.GetValue("InstallPath").ToString();
             byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
@@ -270,7 +272,7 @@ namespace DataWallClient
         {
             Unit selectedUnit = (Unit)LibraryList.SelectedItem;
             RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
-                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + selectedUnit.ToString(), true);
             string InstallPath = soft_key.GetValue("InstallPath").ToString();
             byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
             InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
@@ -311,7 +313,7 @@ namespace DataWallClient
         {
             Unit selectedUnit = (Unit)LibraryList.SelectedItem;
             RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
-                    "SOFTWARE\\DataWall\\" + selectedUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + selectedUnit.ToString(), true);
             string InstallPath = soft_key.GetValue("InstallPath").ToString();
             byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
             InstallPath = Encoding.Unicode.GetString(row_path, 0, row_path.Length - 2);
@@ -331,7 +333,7 @@ namespace DataWallClient
         private void Repack_Click(object sender, EventArgs e)
         {
             RegistryKey soft_key = Registry.LocalMachine.OpenSubKey(
-                    "SOFTWARE\\DataWall\\" + currentUnit.ToString(), true);
+                    "SOFTWARE\\DataWall\\" + login + "\\" + currentUnit.ToString(), true);
 
             string InstallPath = soft_key.GetValue("InstallPath").ToString();
             byte[] row_path = Encoding.Unicode.GetBytes(InstallPath);
