@@ -35,7 +35,7 @@ namespace DataWallLoader
     extern "C" DATAWALLLOADER_API HRESULT InitDH();
 
     extern "C" DATAWALLLOADER_API HRESULT SendKey(const char* soft_name, BYTE* key);
-    extern "C" DATAWALLLOADER_API BYTE*   LoadKey();
+    extern "C" DATAWALLLOADER_API BYTE*   LoadKey(const char* soft_name);
     extern "C" DATAWALLLOADER_API HRESULT ReadFromContainer(
         const char* container_name, 
         BYTE * key, 

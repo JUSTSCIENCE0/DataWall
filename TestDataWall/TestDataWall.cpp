@@ -25,7 +25,7 @@ int CALLBACK WinMain(
     _In_ LPSTR     lpCmdLine,
     _In_ int       nCmdShow)
 {
-    BYTE* key = DataWallLoader::LoadKey();
+    BYTE* key = DataWallLoader::LoadKey("SecondSoft");
 
     HMEMORYMODULE hDLL;
     INITWIND  InitializeWindow;

@@ -568,12 +568,15 @@ namespace DataWallLoader
         return S_OK;
     }
 
-    BYTE* LoadKey()
+    BYTE* LoadKey(const char* soft_name)
     {
+        char pipename[1500];
+        snprintf(pipename, 1500, "\\\\.\\pipe\\%s", soft_name);
+
         BYTE* key = new BYTE[16];
         Sleep(1000);
         HANDLE DataWallHandle = CreateFile(
-            "\\\\.\\pipe\\TestSoft",
+            pipename,
             GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_WRITE,
             NULL,
