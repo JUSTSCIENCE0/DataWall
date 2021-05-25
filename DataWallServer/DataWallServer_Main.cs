@@ -29,15 +29,6 @@ namespace DataWallServer
                 "192837465564738291yashka");
             server = new Server(22876, ref log, "D:\\DataWall\\DataWall.cer", ref db);
 
-            //SHA256 mySHA = SHA256.Create();
-            //byte[] hashValue = mySHA.ComputeHash(Encoding.UTF8.GetBytes("user"));
-            //string hexHash = "";
-            //for (int i = 0; i < hashValue.Length; i++)
-            //{
-            //    hexHash += hashValue[i].ToString("X2");
-            //}
-            //log.msg("Test: " + hexHash);
-
             DrawActivitiesTable(ActivityType.ALL_USERS);
             DrawUsersList();
         }
@@ -56,9 +47,11 @@ namespace DataWallServer
         {
             List<DBUser> users = db.LoadAllUsersData(ActivityType.ALL_USERS);
             UsersList.Items.Clear();
+            SetUser.Items.Clear();
             foreach (DBUser user in users)
             {
                 UsersList.Items.Add(user.login);
+                SetUser.Items.Add(user.login);
             }
         }
 
@@ -178,6 +171,59 @@ namespace DataWallServer
             }
 
             MessageBox.Show("New user added");
+        }
+
+        private void AddSoft_Click(object sender, EventArgs e)
+        {
+            if (SoftName.Text == "")
+            {
+                MessageBox.Show("Wrong value");
+                return;
+            }
+
+            if (!db.AddNewUnit(SoftName.Text))
+            {
+                MessageBox.Show("Error when add new software");
+                return;
+            }
+
+            MessageBox.Show("New software added");
+        }
+
+        private void FillSettingSoft(string login)
+        {
+            List<DBUnit> Available = db.LoadUserAvailable(login);
+            SetSoft.Items.Clear();
+
+            foreach(DBUnit unit in Available)
+            {
+                SetSoft.Items.Add(unit);
+            }
+        }
+
+        private void SetUser_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string login = SetUser.SelectedItem.ToString();
+            FillSettingSoft(login);
+        }
+
+        private void SetUserSoft_Click(object sender, EventArgs e)
+        {
+            if (SetUser.SelectedItem == null || SetSoft.SelectedItem == null)
+            {
+                MessageBox.Show("Wrong values");
+                return;
+            }
+
+            string user = SetUser.SelectedItem.ToString();
+            DBUnit unit = (DBUnit)SetSoft.SelectedItem;
+            if (!db.CorrelateUserUnit(unit.id_software, user))
+            {
+                MessageBox.Show("Error when add new software in user library");
+                return;
+            }
+
+            MessageBox.Show("New software added in user library");
         }
     }
 }

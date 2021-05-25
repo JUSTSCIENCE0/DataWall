@@ -35,6 +35,11 @@ namespace DataWallServer
         public UInt64 id_software;
         public string name;
         public UInt64 product_code;
+
+        public override string ToString()
+        {
+            return id_software.ToString() + " " + name;
+        }
     }
 
     struct DBDevice //computer
@@ -210,6 +215,99 @@ namespace DataWallServer
             return result;
         }
 
+        public bool CheckFreeLibrary(string login)
+        {
+            bool result = true;
+
+            try
+            {
+                mtx.WaitOne();
+                string sql = "SELECT id_software FROM user_soft, software" +
+                " WHERE id_user = '" + login + "' AND id_soft = id_software";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                result = !reader.HasRows;
+                reader.Close();
+                mtx.ReleaseMutex();
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message);
+                mtx.ReleaseMutex();
+                return result;
+            }
+
+            return result;
+        }
+
+        public List<DBUnit> LoadAllUnits()
+        {
+            List<DBUnit> result = new List<DBUnit>();
+
+            try
+            {
+                mtx.WaitOne();
+                string sql = "SELECT * FROM software";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    result.Add(new DBUnit
+                    {
+                        id_software = Convert.ToUInt64(reader["id_software"]),
+                        name = reader["name"].ToString(),
+                        product_code = Convert.ToUInt64(reader["code"])
+                    });
+                }
+                reader.Close();
+                mtx.ReleaseMutex();
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message);
+                mtx.ReleaseMutex();
+                return result;
+            }
+
+            return result;
+        }
+
+        public List<DBUnit> LoadUserAvailable(string login)
+        {
+            List<DBUnit> result = new List<DBUnit>();
+
+            if (CheckFreeLibrary(login))
+                return LoadAllUnits();
+
+            try
+            {
+                mtx.WaitOne();
+                string sql = "SELECT * FROM software WHERE id_software <> ( SELECT id_software FROM user_soft, software" +
+                " WHERE id_user = '" + login + "' AND id_soft = id_software )";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    result.Add(new DBUnit
+                    {
+                        id_software = Convert.ToUInt64(reader["id_software"]),
+                        name = reader["name"].ToString(),
+                        product_code = Convert.ToUInt64(reader["code"])
+                    });
+                }
+                reader.Close();
+                mtx.ReleaseMutex();
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message);
+                mtx.ReleaseMutex();
+                return result;
+            }
+
+            return result;
+        }
+
         public List<DBDevice> LoadUserDevices(string login)
         {
             List<DBDevice> result = new List<DBDevice>();
@@ -300,33 +398,6 @@ namespace DataWallServer
             }
         }
 
-        public bool SetUnitActive(UInt64 id_unit, bool state)
-        {
-            int istate;
-            if (state)
-                istate = 1;
-            else
-                istate = 0;
-
-            string sql = "UPDATE software SET active = " + istate.ToString() +
-                " WHERE id_software = " + id_unit.ToString();
-
-            try
-            {
-                mtx.WaitOne();
-                MySqlCommand command = new MySqlCommand(sql, conn);
-                command.ExecuteNonQuery();
-                mtx.ReleaseMutex();
-                return true;
-            }
-            catch (Exception exp)
-            {
-                log.msg("Database error - " + exp.Message + " for query :" + sql);
-                mtx.ReleaseMutex();
-                return false;
-            }
-        }
-
         public bool CheckUserLibrary(string login)
         {
             string sql = "SELECT * FROM user_soft, software" +
@@ -391,7 +462,7 @@ namespace DataWallServer
             Random rnd = new Random();
             byte[] row_code = new byte[4];
             rnd.NextBytes(row_code);
-            UInt32 code = BitConverter.ToUInt32(row_code, 0);
+            Int32 code = Math.Abs(BitConverter.ToInt32(row_code, 0));
 
             string sql = "INSERT INTO user SET" +
                 " login = '" + login +
@@ -521,33 +592,54 @@ namespace DataWallServer
             }
         }
 
-        public bool AddNewUnit(DBUnit unit)
+        public bool CorrelateUserUnit(UInt64 id_software, string user)
         {
-            return false;
-            //int active = 0;
-            //if (unit.active)
-            //    active = 1;
+            string sql = "INSERT INTO user_soft SET" +
+                " id_user = '" + user +
+                "', id_soft = " + id_software.ToString();
 
-            //string sql = "INSERT INTO library_unit SET" +
-            //    " id_user = " + unit.id_user.ToString() +
-            //    ", product = '" + unit.product +
-            //    "', product_code = " + unit.product_code.ToString() +
-            //    ", active = " + active.ToString();
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                mtx.ReleaseMutex();
+                return true;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
+        }
 
-            //try
-            //{
-            //    mtx.WaitOne();
-            //    MySqlCommand command = new MySqlCommand(sql, conn);
-            //    command.ExecuteNonQuery();
-            //    mtx.ReleaseMutex();
-            //    return true;
-            //}
-            //catch (Exception exp)
-            //{
-            //    log.msg("Database error - " + exp.Message + " for query :" + sql);
-            //    mtx.ReleaseMutex();
-            //    return false;
-            //}
+        public bool AddNewUnit(string name)
+        {
+            Random rnd = new Random();
+            byte[] row_code = new byte[4];
+            rnd.NextBytes(row_code);
+            Int32 code = Math.Abs(BitConverter.ToInt32(row_code, 0));
+
+            string sql = "INSERT INTO software SET" +
+                " name = '" + name +
+                "', code = '" + code.ToString() +
+                "'";
+
+            try
+            {
+                mtx.WaitOne();
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                mtx.ReleaseMutex();
+                return true;
+            }
+            catch (Exception exp)
+            {
+                log.msg("Database error - " + exp.Message + " for query :" + sql);
+                mtx.ReleaseMutex();
+                return false;
+            }
         }
 
         public DBUnit LoadUnitInfo(UInt64 id)
