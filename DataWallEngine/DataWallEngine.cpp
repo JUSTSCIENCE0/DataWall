@@ -973,12 +973,12 @@ namespace DataWallEngine
         return S_OK;
     }
 
-    HRESULT InstallSoftware(const char* id, const char* path, BYTE* key)
+    HRESULT InstallSoftware(const char* id, const char* path)
     {
         if (!Initialized)
             return E_FAIL;
 
-        if (!id || !path || !key)
+        if (!id || !path)
             return E_INVALIDARG;
 
         print_log("Start install software");

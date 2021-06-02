@@ -440,26 +440,8 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
             if (!ReadString(id_software)) BREAK_FAILED
             if (!ReadString(install_path)) BREAK_FAILED
 
-            UINT64 lib_code = 0;
-            UINT64 id = atoll(id_software);
-            for (int i = 0; i < library_size; i++)
-            {
-                if (library[i].id == id)
-                {
-                    lib_code = library[i].code;
-                    break;
-                }
-            }
-            if (!lib_code) BREAK_FAILED
-
-            BYTE current_key[16];
-            char sys_info[3072] = "";
-            snprintf(sys_info, 3072, "%s %s %s", CPU, Motherboard, GPU);
-            hr = DataWallEngine::GenerateKey(sys_info, lib_code, current_key);
-            if (FAILED(hr)) BREAK_FAILED
-
             print_log("%s at path %s", id_software, install_path);
-            hr = DataWallEngine::InstallSoftware(id_software, install_path, current_key);
+            hr = DataWallEngine::InstallSoftware(id_software, install_path);
             if (FAILED(hr)) BREAK_FAILED
             BYTE ok_answ[2] = { 200, 0 };
             WriteString((char*)ok_answ);
