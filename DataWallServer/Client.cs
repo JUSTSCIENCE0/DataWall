@@ -451,7 +451,7 @@ namespace DataWallServer
 
                         byte[] row_hash = GetMessage();
                         string soft_hash = Encoding.UTF8.GetString(row_hash);
-                        log.msg("Soft hash: " + soft_hash);
+                        log.msg("User '" + id + "' Soft '" + soft.name + "' hash: " + soft_hash);
 
                         if (!db.WriteNewSoftHash(id, id_software, soft_hash))
                             throw new Exception("Coudn't write soft hash in db");

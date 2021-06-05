@@ -289,7 +289,10 @@ namespace DataWallClient
             byte result = RecvCode();
 
             if (result != 200)
+            {
                 MessageBox.Show("Сheck failed! Start cancelled!", "Warning!");
+                return;
+            }    
 
             //Start
             SendCode(150);
