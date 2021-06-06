@@ -559,7 +559,6 @@ namespace DataWallLoader
 
     HRESULT InitDH()
     {
-        f_logs = fopen("D:\\loader_log.txt", "wb");
         if (!generateDH(NULL, NULL, NULL))
         {
             return E_FAIL;
